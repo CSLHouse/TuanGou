@@ -1,0 +1,218 @@
+aliyun-oss:
+    endpoint: https://oss-cn-shanghai.aliyuncs.com
+    access-key-id: LTAI5t6aEcFqQy2jiw5bpADJ
+    access-key-secret: 2Wk0gt6tSYWuyiSDffUuogu3E1nj8B
+    bucket-name: pingogo
+    bucket-url: https://pingogo.oss-cn-shanghai.aliyuncs.com
+    base-path: resource
+autocode:
+    transfer-restart: true
+    root: D:\Python\anli\QiangDan
+    server: /server
+    server-api: /api/v1/%s
+    server-plug: /plugin/%s
+    server-initialize: /initialize
+    server-model: /model/%s
+    server-request: /model/%s/request/
+    server-router: /router/%s
+    server-service: /service/%s
+    web: /web/src
+    web-api: /api
+    web-form: /view
+    web-table: /view
+aws-s3:
+    bucket: xxxxx-10005608
+    region: ap-shanghai
+    endpoint: ""
+    s3-force-path-style: false
+    disable-ssl: false
+    secret-id: your-secret-id
+    secret-key: your-secret-key
+    base-url: https://gin.vue.admin
+    path-prefix: cooller/server
+captcha:
+    key-long: 4
+    img-width: 240
+    img-height: 80
+    open-captcha: 0
+    open-captcha-timeout: 7200
+cors:
+    mode: strict-whitelist
+    whitelist:
+        - allow-origin: example1.com
+          allow-methods: POST, GET
+          allow-headers: Content-Type,AccessToken,X-CSRF-Token, Authorization, Token,X-Token,X-User-Id
+          expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
+          allow-credentials: true
+        - allow-origin: example2.com
+          allow-methods: GET, POST
+          allow-headers: content-type
+          expose-headers: Content-Length, Access-Control-Allow-Origin, Access-Control-Allow-Headers, Content-Type
+          allow-credentials: true
+db-list:
+    - disable: true
+      type: ""
+      alias-name: ""
+      path: ""
+      port: ""
+      config: ""
+      db-name: ""
+      username: ""
+      password: ""
+      prefix: ""
+      singular: false
+      engine: ""
+      max-idle-conns: 10
+      max-open-conns: 100
+      log-mode: ""
+      log-zap: false
+email:
+    to: xxx@qq.com
+    port: 465
+    from: xxx@163.com
+    host: smtp.163.com
+    is-ssl: true
+    secret: xxx
+    nickname: test
+excel:
+    dir: ./resource/excel/
+hua-wei-obs:
+    path: you-path
+    bucket: you-bucket
+    endpoint: you-endpoint
+    access-key: you-access-key
+    secret-key: you-secret-key
+jwt:
+    signing-key: 5c13136a-4d9c-4964-9931-df7063faa93f
+    expires-time: 7d
+    buffer-time: 1d
+    issuer: qmPlus
+local:
+    path: uploads/file
+    store-path: uploads/file
+mssql:
+    path: ""
+    port: ""
+    config: ""
+    db-name: ""
+    username: ""
+    password: ""
+    prefix: ""
+    singular: false
+    engine: ""
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: ""
+    log-zap: false
+mysql:
+    path: 127.0.0.1
+    port: "3306"
+    config: charset=utf8mb4&parseTime=True&loc=Local
+    db-name: gva
+    username: root
+    password: "123456"
+    prefix: ""
+    singular: false
+    engine: ""
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: error
+    log-zap: false
+oracle:
+    path: ""
+    port: ""
+    config: ""
+    db-name: ""
+    username: ""
+    password: ""
+    prefix: ""
+    singular: false
+    engine: ""
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: ""
+    log-zap: false
+pgsql:
+    path: ""
+    port: ""
+    config: ""
+    db-name: ""
+    username: ""
+    password: ""
+    prefix: ""
+    singular: false
+    engine: ""
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: ""
+    log-zap: false
+qiniu:
+    zone: ZoneHuaDong
+    bucket: ""
+    img-path: ""
+    use-https: false
+    access-key: ""
+    secret-key: ""
+    use-cdn-domains: false
+redis:
+    db: 0
+    addr: 127.0.0.1:6379
+    password: "123456"
+sqlite:
+    path: ""
+    port: ""
+    config: ""
+    db-name: ""
+    username: ""
+    password: ""
+    prefix: ""
+    singular: false
+    engine: ""
+    max-idle-conns: 10
+    max-open-conns: 100
+    log-mode: ""
+    log-zap: false
+system:
+    env: public
+    addr: 8888
+    db-type: mysql
+    oss-type: aliyun-oss
+    use-multipoint: true
+    use-redis: false
+    iplimit-count: 15000
+    iplimit-time: 3600
+    router-prefix: ""
+tencent-cos:
+    bucket: xxxxx-10005608
+    region: ap-shanghai
+    secret-id: your-secret-id
+    secret-key: your-secret-key
+    base-url: https://gin.vue.admin
+    path-prefix: cooller/server
+timer:
+    start: true
+    spec: '@daily'
+    with_seconds: false
+    detail:
+        - tableName: sys_operation_records
+          compareField: created_at
+          interval: 2160h
+        - tableName: jwt_blacklists
+          compareField: created_at
+          interval: 168h
+wechat:
+    appid: wxa055c151dc6028d3
+    secret: 15ba636837febf7e64840bec8302cdd5
+    session-url: https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code
+    access-token-url: https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s
+    telephone-url: https://api.weixin.qq.com/wxa/business/getuserphonenumber?access_token=%s
+zap:
+    level: info
+    prefix: '[cooller/server]'
+    format: console
+    director: log
+    encode-level: LowercaseColorLevelEncoder
+    stacktrace-key: stacktrace
+    max-age: 0
+    show-line: true
+    log-in-console: true
