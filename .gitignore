@@ -12,6 +12,8 @@
 /server/*.exe
 /web/dist/*
 .DS_Store
+/server/config.yaml
+mall-app-web
 
 # local env files
 .env.local
