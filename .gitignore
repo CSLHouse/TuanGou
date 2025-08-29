@@ -9,11 +9,8 @@
 /server/.idea
 /server/.vscode
 /server/log
-<<<<<<< HEAD
-=======
 /server/*.exe
->>>>>>> 23ff19f ('init')
-
+/web/dist/*
 .DS_Store
 
 # local env files
