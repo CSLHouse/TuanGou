@@ -1,9 +1,9 @@
-package wechat
+package product
 
 import (
 	"cooller/server/global"
 	"cooller/server/model/common/request"
-	"cooller/server/model/wechat"
+	"cooller/server/model/product"
 	wechatReq "cooller/server/model/wechat/request"
 	date_conversion "cooller/server/utils/timer"
 	"fmt"
@@ -13,53 +13,53 @@ import (
 
 type OrderService struct{}
 
-func (o *OrderService) GetProductCartById(userId int, id int) (cartItem wechat.CartItem, err error) {
-	db := global.GVA_DB.Model(&wechat.CartItem{})
+func (o *OrderService) GetProductCartById(userId int, id int) (cartItem product.CartItem, err error) {
+	db := global.GVA_DB.Model(&product.CartItem{})
 	db.Where("user_id = ? and id = ?", userId, id).First(&cartItem)
 	return cartItem, err
 }
 
-func (o *OrderService) GetProductCartByIds(userId int, ids []int) (cartItem []wechat.CartItem, err error) {
-	db := global.GVA_DB.Model(&wechat.CartItem{})
+func (o *OrderService) GetProductCartByIds(userId int, ids []int) (cartItem []product.CartItem, err error) {
+	db := global.GVA_DB.Model(&product.CartItem{})
 	db.Debug().Preload("Product").Preload("SkuStock").Where("user_id = ? and id in ?", userId, ids).First(&cartItem)
 	return cartItem, err
 }
 
-func (o *OrderService) GetProductTmpCartByIds(userId int, ids []int) (cartItem []wechat.CartTmpItem, err error) {
-	db := global.GVA_DB.Model(&wechat.CartTmpItem{})
+func (o *OrderService) GetProductTmpCartByIds(userId int, ids []int) (cartItem []product.CartTmpItem, err error) {
+	db := global.GVA_DB.Model(&product.CartTmpItem{})
 	db.Debug().Preload("Product").Preload("SkuStock").Where("user_id = ? and id in ?", userId, ids).First(&cartItem)
 	return cartItem, err
 }
 
-func (o *OrderService) CreateOrder(e *wechat.Order) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+func (o *OrderService) CreateOrder(e *product.Order) (err error) {
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Create(&e).Error
 	return err
 }
 
-func (o *OrderService) CreateOrderItem(e wechat.OrderItem) (err error) {
-	db := global.GVA_DB.Model(&wechat.OrderItem{})
+func (o *OrderService) CreateOrderItem(e product.OrderItem) (err error) {
+	db := global.GVA_DB.Model(&product.OrderItem{})
 	err = db.Create(&e).Error
 
 	return err
 }
 
-func (o *OrderService) CreateOrderItemByBatch(e []*wechat.OrderItem) (err error) {
-	db := global.GVA_DB.Model(&wechat.OrderItem{})
+func (o *OrderService) CreateOrderItemByBatch(e []*product.OrderItem) (err error) {
+	db := global.GVA_DB.Model(&product.OrderItem{})
 	err = db.CreateInBatches(&e, len(e)).Error
 	return err
 }
 
-func (o *OrderService) GetProductOrderById(id int) (order wechat.Order, err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+func (o *OrderService) GetProductOrderById(id int) (order product.Order, err error) {
+	db := global.GVA_DB.Model(&product.Order{})
 	db.Debug().Where("id = ?", id).Preload("OrderItemList").First(&order)
 	return order, err
 }
 
-func (o *OrderService) GetProductOrderList(info request.PageInfo) (list []wechat.Order, total int64, err error) {
+func (o *OrderService) GetProductOrderList(info request.PageInfo) (list []product.Order, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Count(&total).Error
 	if err != nil {
 		return list, total, err
@@ -69,11 +69,11 @@ func (o *OrderService) GetProductOrderList(info request.PageInfo) (list []wechat
 	return list, total, err
 }
 
-func (o *OrderService) GetProductOrderListByStatus(searchInfo request.StateInfo) (list []wechat.Order, total int64, err error) {
+func (o *OrderService) GetProductOrderListByStatus(searchInfo request.StateInfo) (list []product.Order, total int64, err error) {
 	limit := searchInfo.PageSize
 	offset := searchInfo.PageSize * (searchInfo.Page - 1)
 	state := searchInfo.State
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 
 	var cmdList []interface{}
 	var cmdString string
@@ -175,32 +175,32 @@ func (o *OrderService) GetProductOrderListByStatus(searchInfo request.StateInfo)
 }
 
 func (o *OrderService) UpdateOrderStatus(e *wechatReq.PaySuccessRequest, status int) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Debug().Where("id = ?", e.OrderId).Updates(map[string]interface{}{"pay_type": e.PayType, "status": status}).Error
 	return err
 }
 
 func (o *OrderService) UpdateOrderStatusById(orderId int, status int) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Debug().Where("id = ?", orderId).UpdateColumn("status", status).Error
 	return err
 }
 
 func (o *OrderService) UpdateOrderStatusByOrderSn(orderSn *string, status int) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Debug().Where("order_sn = ?", orderSn).UpdateColumn("status", status).Error
 	return err
 }
 
 func (o *OrderService) UpdateOrderPrepayId(id int, prepayId string) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Debug().Where("id = ?", id).UpdateColumn("prepay_id", prepayId).Error
 	return err
 }
 
 func (o *OrderService) CancelOrder(id int) (outTrade string, err error) {
-	var order wechat.Order
-	db := global.GVA_DB.Model(&wechat.Order{})
+	var order product.Order
+	db := global.GVA_DB.Model(&product.Order{})
 	if err := db.Preload("OrderItemList").First(&order, id).Error; err != nil {
 		return "", err
 	}
@@ -216,8 +216,8 @@ func (o *OrderService) CancelOrder(id int) (outTrade string, err error) {
 	return order.OrderSn, nil
 }
 
-func (o *OrderService) DeleteManyOrder(ids []int) (orderList []wechat.Order, err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+func (o *OrderService) DeleteManyOrder(ids []int) (orderList []product.Order, err error) {
+	db := global.GVA_DB.Model(&product.Order{})
 	if err := db.Where("id in ?", ids).Preload("OrderItemList").Find(&orderList).Error; err != nil {
 		return orderList, err
 	}
@@ -230,13 +230,13 @@ func (o *OrderService) DeleteManyOrder(ids []int) (orderList []wechat.Order, err
 }
 
 func (o *OrderService) UpdateManyOrderStatus(ids []int, status int) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Where("id in ?", ids).UpdateColumn("status", status).Error
 	return err
 }
 
 func (o *OrderService) UpdateOrderReceiverInfo(e *wechatReq.OrderReceiveAddress) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Select("receiver_name", "receiver_phone", "receiver_post_code", "receiver_detail_address", "receiver_province", "receiver_city", "receiver_region").
 		Where("id=?", e.OrderId).
 		Updates(map[string]interface{}{
@@ -252,30 +252,30 @@ func (o *OrderService) UpdateOrderReceiverInfo(e *wechatReq.OrderReceiveAddress)
 }
 
 func (o *OrderService) UpdateOrderMoneyInfo(info *wechatReq.OrderMoneyInfo) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Where("id = ?", info.OrderId).UpdateColumn("discount_amount", info.DiscountAmount).Error
 	return err
 }
 
 func (o *OrderService) UpdateOrderNoteInfo(info *wechatReq.OrderNoteInfo) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Where("id = ?", info.OrderId).UpdateColumn("note", info.Note).Error
 	return err
 }
 
 func (o *OrderService) UpdateOrdersStatus(ids []int, status int) (err error) {
-	db := global.GVA_DB.Model(&wechat.Order{})
+	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Where("id in ?", ids).UpdateColumn("status", status).Error
 	return err
 }
 
-func (o *OrderService) GetOrderSetting(id int) (order wechat.OrderSetting, err error) {
-	db := global.GVA_DB.Model(&wechat.OrderSetting{})
+func (o *OrderService) GetOrderSetting(id int) (order product.OrderSetting, err error) {
+	db := global.GVA_DB.Model(&product.OrderSetting{})
 	db.Where("id = ?", id).First(&order)
 	return order, err
 }
 
-func (exa *HomeService) UpdateOrderSetting(e *wechat.OrderSetting) (err error) {
+func (o *OrderService) UpdateOrderSetting(e *product.OrderSetting) (err error) {
 	err = global.GVA_DB.Save(e).Error
 	return err
 }

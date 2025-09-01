@@ -13,4 +13,5 @@ var (
 	accountService   = service.ServiceGroupApp.WechatServiceGroup.AccountService
 	orderService     = service.ServiceGroupApp.WechatServiceGroup.OrderService
 	wechatService    = service.ServiceGroupApp.WechatServiceGroup.HomeService
+	productService   = service.ServiceGroupApp.ProductServiceGroup.ProductService
 )

@@ -1,13 +1,14 @@
-package wechat
+package product
 
 import (
+	wechatApi "cooller/server/api/v1/wechat"
 	"cooller/server/client/consts"
 	"cooller/server/global"
 	"cooller/server/model/common/request"
 	"cooller/server/model/common/response"
 	payRequest "cooller/server/model/pay/request"
 	payRes "cooller/server/model/pay/response"
-	"cooller/server/model/wechat"
+	"cooller/server/model/product"
 	wechatReq "cooller/server/model/wechat/request"
 	wechatRes "cooller/server/model/wechat/response"
 	"cooller/server/utils"
@@ -52,12 +53,12 @@ func (e *OrderApi) GenerateConfirmOrder(c *gin.Context) {
 			cartPromotionItem.Quantity = cart.Quantity
 			cartPromotionItem.ProductPic = cart.SkuStock.Pic
 			cartPromotionItem.ProductName = cart.Product.Name
-			product, err := wechatService.GetProductByID(cart.ProductId)
-			promotionProduct, promotionMessage, reduceAmount := CalculateProductPromotionPrice(product, nil)
+			productData, err := productService.GetProductByID(cart.ProductId)
+			promotionProduct, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(productData, nil)
 			cartPromotionItem.ReduceAmount = reduceAmount
 			cartPromotionItem.Price = promotionProduct.Price
 			cartPromotionItem.PromotionMessage = promotionMessage
-			skuStock, err := wechatService.GetProductSKUStockById(cart.SkuStockId)
+			skuStock, err := productService.GetProductSKUStockById(cart.SkuStockId)
 			if err != nil {
 				global.GVA_LOG.Error("获取SKU库存失败!", zap.Error(err))
 			}
@@ -83,12 +84,12 @@ func (e *OrderApi) GenerateConfirmOrder(c *gin.Context) {
 			cartPromotionItem.Quantity = cart.Quantity
 			cartPromotionItem.ProductPic = cart.SkuStock.Pic
 			cartPromotionItem.ProductName = cart.Product.Name
-			product, err := wechatService.GetProductByID(cart.ProductId)
-			promotionProduct, promotionMessage, reduceAmount := CalculateProductPromotionPrice(product, nil)
+			product, err := productService.GetProductByID(cart.ProductId)
+			promotionProduct, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(product, nil)
 			cartPromotionItem.ReduceAmount = reduceAmount
 			cartPromotionItem.Price = promotionProduct.Price
 			cartPromotionItem.PromotionMessage = promotionMessage
-			skuStock, err := wechatService.GetProductSKUStockById(cart.SkuStockId)
+			skuStock, err := productService.GetProductSKUStockById(cart.SkuStockId)
 			if err != nil {
 				global.GVA_LOG.Error("获取SKU库存失败!", zap.Error(err))
 			}
@@ -134,7 +135,7 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 	orderDescription := ""
 	var goodsDetail []payRequest.GoodsDetail
 
-	var order wechat.Order
+	var order product.Order
 	order.TotalAmount = 0
 	order.PayAmount = 0
 	order.PromotionAmount = 0
@@ -153,14 +154,14 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		}
 
 		for _, cartItem := range productTmpCartList {
-			product, err := wechatService.GetProductByID(cartItem.ProductId)
+			productData, err := productService.GetProductByID(cartItem.ProductId)
 			if err != nil {
 				global.GVA_LOG.Error("[GenerateOrder]获取物品失败!", zap.Error(err))
 				response.FailWithMessage("[GenerateOrder]获取物品失败", c)
 				return
 			}
-			_, promotionMessage, reduceAmount := CalculateProductPromotionPrice(product, nil)
-			var orderItem wechat.OrderItem
+			_, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(productData, nil)
+			var orderItem product.OrderItem
 			order.PromotionAmount += reduceAmount
 			order.PromotionInfo = fmt.Sprintf("满减优惠：%s", promotionMessage)
 			orderItem.PromotionAmount = reduceAmount
@@ -228,14 +229,14 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		}
 
 		for _, cartItem := range productCartList {
-			product, err := wechatService.GetProductByID(cartItem.ProductId)
+			productData, err := productService.GetProductByID(cartItem.ProductId)
 			if err != nil {
 				global.GVA_LOG.Error("[GenerateOrder]获取物品失败!", zap.Error(err))
 				response.FailWithMessage("[GenerateOrder]获取物品失败", c)
 				return
 			}
-			_, promotionMessage, reduceAmount := CalculateProductPromotionPrice(product, nil)
-			var orderItem wechat.OrderItem
+			_, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(productData, nil)
+			var orderItem product.OrderItem
 			order.PromotionAmount += reduceAmount
 			order.PromotionInfo = fmt.Sprintf("满减优惠：%s", promotionMessage)
 			orderItem.PromotionAmount = reduceAmount
@@ -430,7 +431,7 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 }
 
 // HasStock 判断下单商品是否都有库存
-func (e *OrderApi) HasStock(cartItemList []wechat.CartItem) bool {
+func (e *OrderApi) HasStock(cartItemList []product.CartItem) bool {
 	for _, cartItem := range cartItemList {
 		if cartItem.SkuStock.Stock <= 0 || cartItem.SkuStock.Stock < cartItem.Quantity {
 			return false
@@ -440,9 +441,9 @@ func (e *OrderApi) HasStock(cartItemList []wechat.CartItem) bool {
 }
 
 // 进行库存锁定
-func (e *OrderApi) LockStock(cartItemList []wechat.CartItem) error {
+func (e *OrderApi) LockStock(cartItemList []product.CartItem) error {
 	for _, cartPromotionItem := range cartItemList {
-		count, err := wechatService.UpdateProductSkuStockForStock(cartPromotionItem.SkuStockId, cartPromotionItem.ProductId)
+		count, err := productService.UpdateProductSkuStockForStock(cartPromotionItem.SkuStockId, cartPromotionItem.ProductId)
 		if err != nil {
 			return fmt.Errorf("修改库存时失败: %v", err)
 		}
@@ -454,7 +455,7 @@ func (e *OrderApi) LockStock(cartItemList []wechat.CartItem) error {
 }
 
 // HasStock 判断下单商品是否都有库存
-func (e *OrderApi) HasTmpStock(cartItemList []wechat.CartTmpItem) bool {
+func (e *OrderApi) HasTmpStock(cartItemList []product.CartTmpItem) bool {
 	for _, cartItem := range cartItemList {
 		if cartItem.SkuStock.Stock <= 0 || cartItem.SkuStock.Stock < cartItem.Quantity {
 			return false
@@ -464,9 +465,9 @@ func (e *OrderApi) HasTmpStock(cartItemList []wechat.CartTmpItem) bool {
 }
 
 // 进行库存锁定
-func (e *OrderApi) LockTmpStock(cartItemList []wechat.CartTmpItem) error {
+func (e *OrderApi) LockTmpStock(cartItemList []product.CartTmpItem) error {
 	for _, cartPromotionItem := range cartItemList {
-		count, err := wechatService.UpdateProductSkuStockForStock(cartPromotionItem.SkuStockId, cartPromotionItem.ProductId)
+		count, err := productService.UpdateProductSkuStockForStock(cartPromotionItem.SkuStockId, cartPromotionItem.ProductId)
 		if err != nil {
 			return fmt.Errorf("修改库存时失败: %v", err)
 		}
@@ -700,13 +701,13 @@ func (e *OrderApi) GetOrderSetting(c *gin.Context) {
 }
 
 func (e *OrderApi) UpdateOrderSetting(c *gin.Context) {
-	var home wechat.OrderSetting
+	var home product.OrderSetting
 	err := c.ShouldBindJSON(&home)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	err = wechatService.UpdateOrderSetting(&home)
+	err = orderService.UpdateOrderSetting(&home)
 	if err != nil {
 		global.GVA_LOG.Error("更新失败!", zap.Error(err))
 		response.FailWithMessage("更新失败", c)
@@ -716,7 +717,7 @@ func (e *OrderApi) UpdateOrderSetting(c *gin.Context) {
 }
 
 func (e *OrderApi) GetProductCartList(c *gin.Context) {
-	cartList, err := wechatService.GetProductCartList()
+	cartList, err := productService.GetProductCartList()
 	if err != nil {
 		global.GVA_LOG.Error("获取商品sku库存失败!", zap.Error(err))
 		response.FailWithMessage("获取sku库存失败", c)
@@ -727,14 +728,14 @@ func (e *OrderApi) GetProductCartList(c *gin.Context) {
 
 // CreateProductCart 创建商品购物车
 func (e *OrderApi) CreateProductCart(c *gin.Context) {
-	var cart wechat.CartItem
+	var cart product.CartItem
 	err := c.ShouldBindJSON(&cart)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
 	cart.UserId = utils.GetUserID(c)
-	err = wechatService.CreateProductCart(&cart)
+	err = productService.CreateProductCart(&cart)
 	if err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage("创建失败", c)
@@ -752,7 +753,7 @@ func (e *OrderApi) UpdateProductCartQuantity(c *gin.Context) {
 		return
 	}
 	userId := utils.GetUserID(c)
-	err = wechatService.UpdateProductCartQuantity(userId, quantityInfo.ID, quantityInfo.Quantity)
+	err = productService.UpdateProductCartQuantity(userId, quantityInfo.ID, quantityInfo.Quantity)
 	if err != nil {
 		global.GVA_LOG.Error("更新失败!", zap.Error(err))
 		response.FailWithMessage("更新失败", c)
@@ -770,7 +771,7 @@ func (e *OrderApi) DeleteProductCartById(c *gin.Context) {
 		return
 	}
 	userId := utils.GetUserID(c)
-	err = wechatService.DeleteProductCartById(userId, reqId.ID)
+	err = productService.DeleteProductCartById(userId, reqId.ID)
 	if err != nil {
 		global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败", c)
@@ -788,7 +789,7 @@ func (e *OrderApi) DeleteProductCartByIds(c *gin.Context) {
 		return
 	}
 	userId := utils.GetUserID(c)
-	err = wechatService.DeleteProductCartByIds(userId, reqIds.Ids)
+	err = productService.DeleteProductCartByIds(userId, reqIds.Ids)
 	if err != nil {
 		global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败", c)
@@ -801,7 +802,7 @@ func (e *OrderApi) DeleteProductCartByIds(c *gin.Context) {
 // ClearProductCart 清空商品购物车
 func (e *OrderApi) ClearProductCart(c *gin.Context) {
 	userId := utils.GetUserID(c)
-	err := wechatService.ClearProductCartUserId(userId)
+	err := productService.ClearProductCartUserId(userId)
 	if err != nil {
 		global.GVA_LOG.Error("删除失败!", zap.Error(err))
 		response.FailWithMessage("删除失败", c)
@@ -813,14 +814,14 @@ func (e *OrderApi) ClearProductCart(c *gin.Context) {
 
 // CreateProductTmpCart 创建商品购物车
 func (e *OrderApi) CreateProductTmpCart(c *gin.Context) {
-	var cart wechat.CartTmpItem
+	var cart product.CartTmpItem
 	err := c.ShouldBindJSON(&cart)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
 	cart.UserId = utils.GetUserID(c)
-	err = wechatService.CreateProductTmpCart(&cart)
+	err = productService.CreateProductTmpCart(&cart)
 	if err != nil {
 		global.GVA_LOG.Error("创建失败!", zap.Error(err))
 		response.FailWithMessage("创建失败", c)

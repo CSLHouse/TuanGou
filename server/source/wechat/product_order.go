@@ -2,12 +2,12 @@ package wechat
 
 import (
 	"context"
-	wechatModel "cooller/server/model/wechat"
+	wechatModel "cooller/server/model/product"
 	"cooller/server/service/system"
 	"gorm.io/gorm"
 )
 
-const initOrderProductOrder = initOrderReceiveAddress + 1
+const initOrderProductOrder = initOrderOrderSetting + 1
 
 type initProductOrder struct{}
 

@@ -1,15 +1,15 @@
 import service from '@/utils/request'
-export function fetchList(params) {
-  return service({
-    url:'/product/newProductList',
-    method:'get',
-    params:params
-  })
-}
+// export function fetchList(params) {
+//   return service({
+//     url:'/promo/newProductList',
+//     method:'get',
+//     params:params
+//   })
+// }
 
 export function updateRecommendStatus(data) {
   return service({
-    url:'/product/newProductState',
+    url:'/promo/newProductState',
     method:'put',
     data:data
   })
@@ -17,7 +17,7 @@ export function updateRecommendStatus(data) {
 
 export function deleteNewProduct(params) {
   return service({
-    url:'/product/newProduct',
+    url:'/promo/newProduct',
     method:'delete',
     params:params
   })
@@ -25,7 +25,7 @@ export function deleteNewProduct(params) {
 
 export function createNewProduct(data) {
   return service({
-    url:'/product/newProduct',
+    url:'/promo/newProduct',
     method:'post',
     data:data
   })
@@ -33,7 +33,7 @@ export function createNewProduct(data) {
 
 export function updateNewProductSort(data) {
   return service({
-    url:'/product/newProductSort',
+    url:'/promo/newProductSort',
     method:'put',
     data:data
   })

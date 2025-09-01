@@ -1,15 +1,15 @@
-package wechat
+package product
 
 import (
 	"context"
-	wechatModel "cooller/server/model/wechat"
+	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 	"time"
 )
 
-const initOrderHomeProduct = initOrderRecommendProduct + 1
+const initOrderHomeProduct = initOrderBrand + 1
 
 type initHomeProduct struct{}
 
@@ -24,7 +24,12 @@ func (i *initHomeProduct) MigrateTable(ctx context.Context) (context.Context, er
 		return ctx, system.ErrMissingDBContext
 	}
 	return ctx, db.AutoMigrate(
-		&wechatModel.Product{},
+		&productModel.Product{},
+		&productModel.ProductFullReduction{},
+		&productModel.ProductLadder{},
+		&productModel.SkuStock{},
+		&productModel.CartItem{},
+		&productModel.CartTmpItem{},
 	)
 }
 
@@ -33,11 +38,11 @@ func (i *initHomeProduct) TableCreated(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	return db.Migrator().HasTable(&wechatModel.Product{})
+	return db.Migrator().HasTable(&productModel.Product{})
 }
 
 func (i initHomeProduct) InitializerName() string {
-	return wechatModel.Product{}.TableName()
+	return productModel.Product{}.TableName()
 }
 
 func (i *initHomeProduct) InitializeData(ctx context.Context) (next context.Context, err error) {
@@ -47,7 +52,7 @@ func (i *initHomeProduct) InitializeData(ctx context.Context) (next context.Cont
 	}
 	startTime, err := time.Parse("2006-01-02 15:04:05", "2023-12-09 00:00:00")
 	endTime, err := time.Parse("2006-01-02 15:04:05", "2024-02-25 00:00:00")
-	entities := []wechatModel.Product{
+	entities := []productModel.Product{
 		{
 			BrandId:                    1,
 			ProductCategoryId:          1,
@@ -136,7 +141,7 @@ func (i *initHomeProduct) InitializeData(ctx context.Context) (next context.Cont
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {
-		return ctx, errors.Wrap(err, wechatModel.Product{}.TableName()+"表数据初始化失败!")
+		return ctx, errors.Wrap(err, productModel.Product{}.TableName()+"表数据初始化失败!")
 	}
 	next = context.WithValue(ctx, i.InitializerName(), entities)
 
@@ -148,7 +153,7 @@ func (i *initHomeProduct) DataInserted(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("name = ?", "猪迪克单人票").First(&wechatModel.Product{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("name = ?", "猪迪克单人票").First(&productModel.Product{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true

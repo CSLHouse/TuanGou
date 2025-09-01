@@ -2,7 +2,7 @@ package response
 
 import (
 	"cooller/server/global"
-	"cooller/server/model/wechat"
+	productModel "cooller/server/model/product"
 	wechatReq "cooller/server/model/wechat/request"
 	"time"
 )
@@ -36,7 +36,7 @@ type HomeFlashResponse struct {
 	NextStartTime time.Time `json:"nextStartTime"`
 	NextEndTime   time.Time `json:"nextEndTime"`
 	//HotProductList interface{} `json:"hotProductList"`
-	ProductList []wechat.Product `json:"productList"`
+	ProductList []productModel.Product `json:"productList"`
 }
 
 // SampleProductInfo 简单商品信息
@@ -62,7 +62,7 @@ type GroupBuyResp struct {
 //}
 
 type ProductDetails struct {
-	Product    wechat.Product       `json:"product" form:"product" gorm:"comment:商品信息"`
+	Product    productModel.Product `json:"product" form:"product" gorm:"comment:商品信息"`
 	BuyersList wechatReq.BuyersInfo `json:"buyersList" form:"buyersList" gorm:"comment:买家信息"`
 }
 

@@ -8,13 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
-const initOrderHome = system.InitWechatInternal + 1
+const initAdvertiseOrderHome = system.InitWechatInternal + 1
 
 type initHome struct{}
 
 // auto run
 func init() {
-	system.RegisterInit(initOrderHome, &initHome{})
+	system.RegisterInit(initAdvertiseOrderHome, &initHome{})
 }
 
 func (i *initHome) MigrateTable(ctx context.Context) (context.Context, error) {

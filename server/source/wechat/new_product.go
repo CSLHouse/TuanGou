@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const initOrderNewProduct = initOrderFlashPromotion + 1
+const initOrderNewProduct = initOrderRecommendProduct + 1
 
 type initNewProduct struct{}
 
@@ -24,11 +24,6 @@ func (i *initNewProduct) MigrateTable(ctx context.Context) (context.Context, err
 	}
 	return ctx, db.AutoMigrate(
 		&wechatModel.NewProduct{},
-		&wechatModel.ProductFullReduction{},
-		&wechatModel.ProductLadder{},
-		&wechatModel.SkuStock{},
-		&wechatModel.CartItem{},
-		&wechatModel.CartTmpItem{},
 	)
 }
 

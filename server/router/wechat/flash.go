@@ -1,4 +1,4 @@
-package product
+package wechat
 
 import (
 	v1 "cooller/server/api/v1"
@@ -11,7 +11,7 @@ type FlashRouter struct{}
 func (s *FlashRouter) InitFlashRouter(Router *gin.RouterGroup, RouterPub *gin.RouterGroup) {
 	flashPublicRouterWithoutRecord := RouterPub.Group("flash")
 	flashRouter := Router.Group("flash").Use(middleware.OperationRecord())
-	flashApi := v1.ApiGroupApp.ProductApiGroup.FlashApi
+	flashApi := v1.ApiGroupApp.WechatApiGroup.FlashApi
 	{
 		flashRouter.POST("create", flashApi.CreateFlashPromotion)
 		flashRouter.PUT("update", flashApi.UpdateFlashPromotion)

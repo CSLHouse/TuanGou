@@ -15,7 +15,7 @@ type ServiceGroup struct {
 	BusinessServiceGroup business.ServiceGroup
 	WechatServiceGroup   wechat.ServiceGroup
 	PaymentServiceGroup  pay.ServiceGroup
-	CouponServiceGroup   product.ServiceGroup
+	ProductServiceGroup  product.ServiceGroup
 }
 
 var ServiceGroupApp = new(ServiceGroup)

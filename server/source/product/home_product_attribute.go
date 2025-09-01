@@ -1,14 +1,14 @@
-package wechat
+package product
 
 import (
 	"context"
-	wechatModel "cooller/server/model/wechat"
+	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
-const initOrderHomeProductAttribute = initOrderHomeProductAttributeCategory + 1
+const initOrderHomeProductAttribute = initOrderHomeProduct + 1
 
 type initHomeProductAttribute struct{}
 
@@ -23,8 +23,8 @@ func (i *initHomeProductAttribute) MigrateTable(ctx context.Context) (context.Co
 		return ctx, system.ErrMissingDBContext
 	}
 	return ctx, db.AutoMigrate(
-		&wechatModel.ProductAttribute{},
-		&wechatModel.ProductAttributeValue{},
+		&productModel.ProductAttribute{},
+		&productModel.ProductAttributeValue{},
 	)
 }
 
@@ -33,11 +33,11 @@ func (i *initHomeProductAttribute) TableCreated(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	return db.Migrator().HasTable(&wechatModel.ProductAttribute{})
+	return db.Migrator().HasTable(&productModel.ProductAttribute{})
 }
 
 func (i initHomeProductAttribute) InitializerName() string {
-	return wechatModel.ProductAttribute{}.TableName()
+	return productModel.ProductAttribute{}.TableName()
 }
 
 func (i *initHomeProductAttribute) InitializeData(ctx context.Context) (next context.Context, err error) {
@@ -46,7 +46,7 @@ func (i *initHomeProductAttribute) InitializeData(ctx context.Context) (next con
 		return ctx, system.ErrMissingDBContext
 	}
 
-	entities := []wechatModel.ProductAttribute{
+	entities := []productModel.ProductAttribute{
 		{
 			ProductAttributeCategoryId: 1,
 			Name:                       "次数",
@@ -114,7 +114,7 @@ func (i *initHomeProductAttribute) InitializeData(ctx context.Context) (next con
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {
-		return ctx, errors.Wrap(err, wechatModel.ProductAttribute{}.TableName()+"表数据初始化失败!")
+		return ctx, errors.Wrap(err, productModel.ProductAttribute{}.TableName()+"表数据初始化失败!")
 	}
 	next = context.WithValue(ctx, i.InitializerName(), entities)
 
@@ -126,7 +126,7 @@ func (i *initHomeProductAttribute) DataInserted(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("name = ?", "款式").First(&wechatModel.ProductAttribute{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("name = ?", "款式").First(&productModel.ProductAttribute{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true

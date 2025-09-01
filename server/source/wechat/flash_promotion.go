@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const initOrderFlashPromotion = initOrderBrand + 1
+const initOrderFlashPromotion = initOrderWXUser + 1
 
 type initFlashPromotion struct{}
 

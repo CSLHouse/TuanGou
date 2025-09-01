@@ -1,8 +1,8 @@
-package wechat
+package product
 
 import (
 	"context"
-	wechatModel "cooller/server/model/wechat"
+	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -23,7 +23,7 @@ func (i *initHomeProductAttributeCategory) MigrateTable(ctx context.Context) (co
 		return ctx, system.ErrMissingDBContext
 	}
 	return ctx, db.AutoMigrate(
-		&wechatModel.ProductAttributeCategory{},
+		&productModel.ProductAttributeCategory{},
 	)
 }
 
@@ -32,11 +32,11 @@ func (i *initHomeProductAttributeCategory) TableCreated(ctx context.Context) boo
 	if !ok {
 		return false
 	}
-	return db.Migrator().HasTable(&wechatModel.ProductAttributeCategory{})
+	return db.Migrator().HasTable(&productModel.ProductAttributeCategory{})
 }
 
 func (i initHomeProductAttributeCategory) InitializerName() string {
-	return wechatModel.ProductAttributeCategory{}.TableName()
+	return productModel.ProductAttributeCategory{}.TableName()
 }
 
 func (i *initHomeProductAttributeCategory) InitializeData(ctx context.Context) (next context.Context, err error) {
@@ -45,7 +45,7 @@ func (i *initHomeProductAttributeCategory) InitializeData(ctx context.Context) (
 		return ctx, system.ErrMissingDBContext
 	}
 
-	entities := []wechatModel.ProductAttributeCategory{
+	entities := []productModel.ProductAttributeCategory{
 		{
 			Name:           "体验卡",
 			AttributeCount: 1,
@@ -73,7 +73,7 @@ func (i *initHomeProductAttributeCategory) InitializeData(ctx context.Context) (
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {
-		return ctx, errors.Wrap(err, wechatModel.ProductAttributeCategory{}.TableName()+"表数据初始化失败!")
+		return ctx, errors.Wrap(err, productModel.ProductAttributeCategory{}.TableName()+"表数据初始化失败!")
 	}
 	next = context.WithValue(ctx, i.InitializerName(), entities)
 
@@ -85,7 +85,7 @@ func (i *initHomeProductAttributeCategory) DataInserted(ctx context.Context) boo
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("id = ?", 1).First(&wechatModel.ProductAttributeCategory{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("id = ?", 1).First(&productModel.ProductAttributeCategory{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true

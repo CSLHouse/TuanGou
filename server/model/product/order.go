@@ -1,4 +1,4 @@
-package wechat
+package product
 
 import (
 	"cooller/server/global"

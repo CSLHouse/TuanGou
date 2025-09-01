@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const initOrderWXUser = initOrderHomeProductAttribute + 1
+const initOrderWXUser = initOrderProductOrder + 1
 
 type initWXUser struct{}
 

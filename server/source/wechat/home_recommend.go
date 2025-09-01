@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const initOrderRecommendProduct = initOrderBrand + 1
+const initOrderRecommendProduct = initAdvertiseOrderHome + 1
 
 type initRecommendProduct struct{}
 

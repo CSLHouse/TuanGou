@@ -1,6 +1,8 @@
 package response
 
-import "cooller/server/model/wechat"
+import (
+	"cooller/server/model/product"
+)
 
 // PrepayResponse
 type PrepayResponse struct {
@@ -32,6 +34,6 @@ type GenerateOrderResponse struct {
 }
 
 type GenerateOrderDetailResponse struct {
-	Order   wechat.Order                      `json:"order"`
+	Order   product.Order                     `json:"order"`
 	Payment *PrepayWithRequestPaymentResponse `json:"payment"`
 }

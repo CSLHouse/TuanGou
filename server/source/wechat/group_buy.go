@@ -8,7 +8,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const initOrderBoutiqueGroup = initOrderHomeProductAttribute + 1
+const initOrderBoutiqueGroup = initOrderFlashPromotion + 1
 
 type initBoutiqueGroup struct{}
 

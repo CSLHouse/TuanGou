@@ -1,7 +1,10 @@
 package wechat
 
+import "cooller/server/router/product"
+
 type RouterGroup struct {
-	WechatRouter
+	FlashRouter
 	AccountRouter
-	OrderRouter
+	product.OrderRouter
+	WechatRouter
 }

@@ -1,14 +1,14 @@
-package wechat
+package product
 
 import (
 	"context"
-	wechatModel "cooller/server/model/wechat"
+	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
-const initOrderBrand = initOrderHome + 1
+const initOrderBrand = system.InitProductInternal + 1
 
 type initBrand struct{}
 
@@ -23,7 +23,7 @@ func (i *initBrand) MigrateTable(ctx context.Context) (context.Context, error) {
 		return ctx, system.ErrMissingDBContext
 	}
 	return ctx, db.AutoMigrate(
-		&wechatModel.Brand{},
+		&productModel.Brand{},
 	)
 }
 
@@ -32,11 +32,11 @@ func (i *initBrand) TableCreated(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	return db.Migrator().HasTable(&wechatModel.Brand{})
+	return db.Migrator().HasTable(&productModel.Brand{})
 }
 
 func (i initBrand) InitializerName() string {
-	return wechatModel.Brand{}.TableName()
+	return productModel.Brand{}.TableName()
 }
 
 func (i *initBrand) InitializeData(ctx context.Context) (next context.Context, err error) {
@@ -45,7 +45,7 @@ func (i *initBrand) InitializeData(ctx context.Context) (next context.Context, e
 		return ctx, system.ErrMissingDBContext
 	}
 
-	entities := []wechatModel.Brand{
+	entities := []productModel.Brand{
 		{
 			Name:                "猪迪克星动乐园",
 			FirstLetter:         "Z",
@@ -60,7 +60,7 @@ func (i *initBrand) InitializeData(ctx context.Context) (next context.Context, e
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {
-		return ctx, errors.Wrap(err, wechatModel.Brand{}.TableName()+"表数据初始化失败!")
+		return ctx, errors.Wrap(err, productModel.Brand{}.TableName()+"表数据初始化失败!")
 	}
 	next = context.WithValue(ctx, i.InitializerName(), entities)
 
@@ -72,7 +72,7 @@ func (i *initBrand) DataInserted(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("name = ?", "猪迪克星动乐园").First(&wechatModel.Brand{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("name = ?", "猪迪克星动乐园").First(&productModel.Brand{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true

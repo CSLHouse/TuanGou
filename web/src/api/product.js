@@ -99,7 +99,7 @@ export const deleteProductBrand = (params) => {
 // 获取首页轮播广告表
 export const getAdvertiseList = (params) => {
     return service({
-        url: '/product/advertiseList',
+        url: '/promo/advertiseList',
         method: 'get',
         params
     })
@@ -108,7 +108,7 @@ export const getAdvertiseList = (params) => {
 // 创建首页轮播广告
 export const createAdvertise = (data) => {
     return service({
-      url: '/product/advertise',
+      url: '/promo/advertise',
       method: 'post',
       data
     })
@@ -117,7 +117,7 @@ export const createAdvertise = (data) => {
 // 更新首页轮播广告
 export const updateAdvertise = (data) => {
     return service({
-        url: '/product/advertise',
+        url: '/promo/advertise',
         method: 'put',
         data
     })
@@ -125,7 +125,7 @@ export const updateAdvertise = (data) => {
 
 export const deletedvertise = (params) => {
     return service({
-        url: '/product/advertise',
+        url: '/promo/advertise',
         method: 'delete',
         params: params,
     })
@@ -134,7 +134,7 @@ export const deletedvertise = (params) => {
 // 更新首页轮播广告状态
 export const updateAdvertiseByIdForState = (data) => {
     return service({
-        url: '/product/advertiseState',
+        url: '/promo/advertiseState',
         method: 'put',
         data
     })
@@ -144,7 +144,7 @@ export const updateAdvertiseByIdForState = (data) => {
 // 获取首页推荐专题表 猜你喜欢
 export const getRecommendProductList = (params) => {
     return service({
-        url: '/product/recommendProduct',
+        url: '/promo/recommendProduct',
         method: 'get',
         params
     })
@@ -153,7 +153,7 @@ export const getRecommendProductList = (params) => {
 // 获取首页推荐专题表排序 猜你喜欢
 export const updateRecommendProductByIdForSort = (data) => {
     return service({
-        url: '/product/updateRecommendSort',
+        url: '/promo/updateRecommendSort',
         method: 'post',
         data
     })
@@ -162,7 +162,7 @@ export const updateRecommendProductByIdForSort = (data) => {
 // 获取首页推荐专题表 猜你喜欢
 export const addRecommendProductList = (data) => {
     return service({
-        url: '/product/recommendProduct',
+        url: '/promo/recommendProduct',
         method: 'post',
         data
     })
@@ -170,7 +170,7 @@ export const addRecommendProductList = (data) => {
 // 更新首页推荐专题表
 export const updateRecommendProduct = (data) => {
     return service({
-        url: '/product/recommendProduct',
+        url: '/promo/recommendProduct',
         method: 'put',
         data
     })
@@ -179,7 +179,7 @@ export const updateRecommendProduct = (data) => {
 // 删除首页推荐专题表
 export const deleteRecommendProduct = (data) => {
     return service({
-        url: '/product/recommendProduct',
+        url: '/promo/recommendProduct',
         method: 'delete',
         data
     })

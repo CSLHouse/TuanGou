@@ -7,7 +7,7 @@ import (
 	"gorm.io/gorm"
 )
 
-const initOrderReceiveAddress = initOrderWXUser + 1
+const initOrderReceiveAddress = initOrderRecommendProduct + 1
 
 type initMemberReceiveAddress struct{}
 

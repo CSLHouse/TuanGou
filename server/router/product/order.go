@@ -1,4 +1,4 @@
-package wechat
+package product
 
 import (
 	v1 "cooller/server/api/v1"
@@ -10,7 +10,7 @@ type OrderRouter struct{}
 
 func (s *OrderRouter) InitOrderRouter(Router *gin.RouterGroup) (R gin.IRoutes) {
 	wxOrderRouter := Router.Group("order").Use(middleware.OperationRecord())
-	wxOrderApi := v1.ApiGroupApp.WechatApiGroup.OrderApi
+	wxOrderApi := v1.ApiGroupApp.ProductApiGroup.OrderApi
 	{
 		wxOrderRouter.POST("generateConfirmOrder", wxOrderApi.GenerateConfirmOrder)
 		wxOrderRouter.POST("generateOrder", wxOrderApi.GenerateOrder)

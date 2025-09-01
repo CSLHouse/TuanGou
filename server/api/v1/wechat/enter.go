@@ -1,11 +1,13 @@
 package wechat
 
-import "cooller/server/service"
+import (
+	"cooller/server/service"
+)
 
 type ApiGroup struct {
-	HomeApi
 	WXAccountApi
-	OrderApi
+	FlashApi
+	HomeApi
 }
 
 var (
@@ -14,4 +16,5 @@ var (
 	orderService                 = service.ServiceGroupApp.WechatServiceGroup.OrderService
 	jspaymentService             = service.ServiceGroupApp.PaymentServiceGroup.PayMentService
 	fileUploadAndDownloadService = service.ServiceGroupApp.ExampleServiceGroup.FileUploadAndDownloadService
+	productService               = service.ServiceGroupApp.ProductServiceGroup.ProductService
 )
