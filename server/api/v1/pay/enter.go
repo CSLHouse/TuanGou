@@ -11,7 +11,6 @@ type ApiGroup struct {
 var (
 	jspaymentService = service.ServiceGroupApp.PaymentServiceGroup.PayMentService
 	accountService   = service.ServiceGroupApp.WechatServiceGroup.AccountService
-	orderService     = service.ServiceGroupApp.WechatServiceGroup.OrderService
-	wechatService    = service.ServiceGroupApp.WechatServiceGroup.HomeService
 	productService   = service.ServiceGroupApp.ProductServiceGroup.ProductService
+	orderService     = service.ServiceGroupApp.ProductServiceGroup.OrderService
 )

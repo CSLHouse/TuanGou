@@ -37,6 +37,4 @@ var (
 	dictionaryDetailService = service.ServiceGroupApp.SystemServiceGroup.DictionaryDetailService
 	authorityBtnService     = service.ServiceGroupApp.SystemServiceGroup.AuthorityBtnService
 	chatGptService          = service.ServiceGroupApp.SystemServiceGroup.ChatGptService
-	accountService          = service.ServiceGroupApp.WechatServiceGroup.AccountService
-	memberService           = service.ServiceGroupApp.BusinessServiceGroup.VIPMemberService
 )

@@ -1,6 +1,7 @@
 package product
 
 import (
+	"context"
 	wechatApi "cooller/server/api/v1/wechat"
 	"cooller/server/client/consts"
 	"cooller/server/global"
@@ -13,9 +14,11 @@ import (
 	wechatRes "cooller/server/model/wechat/response"
 	"cooller/server/utils"
 	"fmt"
-	"github.com/bwmarrin/snowflake"
+	"github.com/ChangSZ/golib/mathutil"
+	"github.com/ChangSZ/golib/repo/redis"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -34,85 +37,76 @@ func (e *OrderApi) GenerateConfirmOrder(c *gin.Context) {
 		response.FailWithMessage("Not get userId!", c)
 		return
 	}
-	cartItemList := make([]*wechatRes.CartPromotionItem, 0)
-	var totalAmount float32 = 0
-	var promotionAmount float32 = 0
-	pickUp := 0
 
+	// 获取购物车信息
+	var productCartList []*product.CartCommonItem
 	if reqIds.Tag == 1 {
-		productCartList, err := orderService.GetProductTmpCartByIds(userId, reqIds.Ids)
+		productCartList, err = orderService.GetProductTmpCartByIds(userId, reqIds.Ids)
 		if err != nil {
 			global.GVA_LOG.Error("获取购物车物品失败!", zap.Error(err))
 			response.FailWithMessage("获取购物车物品失败", c)
 			return
 		}
-		for _, cart := range productCartList {
-			var cartPromotionItem wechatRes.CartPromotionItem
-			cartPromotionItem.ID = cart.ID
-			cartPromotionItem.CreatedAt = cart.CreatedAt
-			cartPromotionItem.Quantity = cart.Quantity
-			cartPromotionItem.ProductPic = cart.SkuStock.Pic
-			cartPromotionItem.ProductName = cart.Product.Name
-			productData, err := productService.GetProductByID(cart.ProductId)
-			promotionProduct, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(productData, nil)
-			cartPromotionItem.ReduceAmount = reduceAmount
-			cartPromotionItem.Price = promotionProduct.Price
-			cartPromotionItem.PromotionMessage = promotionMessage
-			skuStock, err := productService.GetProductSKUStockById(cart.SkuStockId)
-			if err != nil {
-				global.GVA_LOG.Error("获取SKU库存失败!", zap.Error(err))
-			}
-			cartPromotionItem.RealStock = skuStock.Stock
-			cartItemList = append(cartItemList, &cartPromotionItem)
-			totalAmount += cartPromotionItem.Price
-			promotionAmount += cartPromotionItem.ReduceAmount
-			if promotionProduct.SelfPickup > 0 {
-				pickUp = 1
-			}
-		}
+
 	} else if reqIds.Tag == 2 {
-		productCartList, err := orderService.GetProductCartByIds(userId, reqIds.Ids)
+		productCartList, err = orderService.GetProductCartByIds(userId, reqIds.Ids)
 		if err != nil {
 			global.GVA_LOG.Error("获取购物车物品失败!", zap.Error(err))
 			response.FailWithMessage("获取购物车物品失败", c)
 			return
-		}
-		for _, cart := range productCartList {
-			var cartPromotionItem wechatRes.CartPromotionItem
-			cartPromotionItem.ID = cart.ID
-			cartPromotionItem.CreatedAt = cart.CreatedAt
-			cartPromotionItem.Quantity = cart.Quantity
-			cartPromotionItem.ProductPic = cart.SkuStock.Pic
-			cartPromotionItem.ProductName = cart.Product.Name
-			product, err := productService.GetProductByID(cart.ProductId)
-			promotionProduct, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(product, nil)
-			cartPromotionItem.ReduceAmount = reduceAmount
-			cartPromotionItem.Price = promotionProduct.Price
-			cartPromotionItem.PromotionMessage = promotionMessage
-			skuStock, err := productService.GetProductSKUStockById(cart.SkuStockId)
-			if err != nil {
-				global.GVA_LOG.Error("获取SKU库存失败!", zap.Error(err))
-			}
-			cartPromotionItem.RealStock = skuStock.Stock
-			cartItemList = append(cartItemList, &cartPromotionItem)
-			totalAmount += cartPromotionItem.Price
-			promotionAmount += cartPromotionItem.ReduceAmount
-			if promotionProduct.SelfPickup > 0 {
-				pickUp = 1
-			}
 		}
 	}
 
-	address, err := accountService.GetMemberReceiveAddressList(userId)
+	cartPromotionItemList, err := e.ListPromotion(productCartList)
+	// 实际付款金额
+	//payAmount := totalAmount - promotionAmount
+	//if payAmount < 0 {
+	//	global.GVA_LOG.Error("付款金额错误!", zap.Error(err))
+	//	response.FailWithMessage("付款金额错误", c)
+	//	return
+	//}
+	// 获取用户可用优惠券列表
+	api := CouponApi{}
+	couponHistoryDetailList, err := api.ListCart(userId, cartPromotionItemList, 1)
+	if err != nil {
+		global.GVA_LOG.Error("获取优惠券失败!", zap.Error(err))
+		response.FailWithMessage("获取优惠券失败", c)
+		return
+	}
+	// 获取用户收货地址列表
+	addressList, err := accountService.GetMemberReceiveAddressList(userId)
+	if err != nil {
+		global.GVA_LOG.Error("获取收货地址列表失败!", zap.Error(err))
+		response.FailWithMessage("获取收货地址列表失败", c)
+		return
+	}
+	// 获取用户积分
+
+	// 计算总金额、活动优惠、应付金额
+	calcAmount := e.CalcCartAmount(cartPromotionItemList)
 
 	var order wechatRes.GenerateOrderResModel
-	order.CartPromotionItemList = cartItemList
-	order.MemberReceiveAddressList = address
-	order.CalcAmount.TotalAmount = totalAmount
-	order.CalcAmount.PromotionAmount = promotionAmount
-	order.CalcAmount.PayAmount = totalAmount - promotionAmount
-	order.PickupType = pickUp
+	order.CartPromotionItemList = cartPromotionItemList
+	order.MemberReceiveAddressList = addressList
+	order.CalcAmount = *calcAmount
+	order.PickupType = 1
+	order.CouponHistoryDetailList = couponHistoryDetailList
 	response.OkWithData(order, c)
+}
+
+// CalcCartAmount 计算购物车中商品的价格
+func (e *OrderApi) CalcCartAmount(cartPromotionItemList []*product.CartPromotionItem) *wechatRes.CalcAmount {
+	calcAmount := &wechatRes.CalcAmount{}
+	var totalAmount float32
+	var promotionAmount float32
+	for _, cartPromotionItem := range cartPromotionItemList {
+		totalAmount += cartPromotionItem.Price * float32(cartPromotionItem.Quantity)
+		promotionAmount += cartPromotionItem.ReduceAmount * float32(cartPromotionItem.Quantity)
+	}
+	calcAmount.TotalAmount = totalAmount
+	calcAmount.PromotionAmount = promotionAmount
+	calcAmount.PayAmount = totalAmount - promotionAmount
+	return calcAmount
 }
 
 func (e *OrderApi) GenerateOrder(c *gin.Context) {
@@ -127,194 +121,160 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		response.FailWithMessage("下单ids不可为空", c)
 		return
 	}
+	// 校验收货地址
+	if orderReq.MemberReceiveAddressId == 0 {
+		global.GVA_LOG.Error("请选择收货地址！", zap.Error(err))
+		response.FailWithMessage("请选择收货地址！", c)
+		return
+	}
 
 	userId := utils.GetUserID(c)
-	var payReq payRequest.PrepayRequest
-	payReq.Appid = utils.String(orderReq.AppId)
-	payReq.Mchid = utils.String(consts.MachID)
+
 	orderDescription := ""
 	var goodsDetail []payRequest.GoodsDetail
 
-	var order product.Order
-	order.TotalAmount = 0
-	order.PayAmount = 0
-	order.PromotionAmount = 0
+	var productCommonCartList []*product.CartCommonItem
 	if orderReq.BuyType == 1 { // 直接购买
-		productTmpCartList, err := orderService.GetProductTmpCartByIds(userId, orderReq.Ids)
+		productCommonCartList, err = orderService.GetProductTmpCartByIds(userId, orderReq.Ids)
 		if err != nil {
-			global.GVA_LOG.Error("库存不足，无法下单", zap.Error(err))
-			response.FailWithMessage("库存不足，无法下单", c)
-			return
-		}
-
-		if !e.HasTmpStock(productTmpCartList) {
-			global.GVA_LOG.Error("获取购物车物品失败!", zap.Error(err))
+			global.GVA_LOG.Error("获取购物车物品失败", zap.Error(err))
 			response.FailWithMessage("获取购物车物品失败", c)
 			return
 		}
 
-		for _, cartItem := range productTmpCartList {
-			productData, err := productService.GetProductByID(cartItem.ProductId)
-			if err != nil {
-				global.GVA_LOG.Error("[GenerateOrder]获取物品失败!", zap.Error(err))
-				response.FailWithMessage("[GenerateOrder]获取物品失败", c)
-				return
-			}
-			_, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(productData, nil)
-			var orderItem product.OrderItem
-			order.PromotionAmount += reduceAmount
-			order.PromotionInfo = fmt.Sprintf("满减优惠：%s", promotionMessage)
-			orderItem.PromotionAmount = reduceAmount
-			orderItem.PromotionName = fmt.Sprintf("满减优惠：%s", promotionMessage)
-			// 计算优惠前总金额
-			order.TotalAmount += order.TotalAmount + cartItem.Product.Price*float32(cartItem.Quantity)
-			// 该商品经过优惠后的实际金额
-			realAmount := cartItem.Product.Price*float32(cartItem.Quantity) - reduceAmount
-			if realAmount < 0 {
-				global.GVA_LOG.Error("[GenerateOrder]获取价格计算失败!", zap.Error(err))
-				response.FailWithMessage("[GenerateOrder]获取价格计算失败", c)
-				return
-			}
-			//orderItem.OrderId = order.ID
-			orderItem.ProductId = cartItem.ProductId
-			orderItem.ProductSkuId = cartItem.SkuStock.SkuCode
-			orderItem.UserId = cartItem.UserId
-			orderItem.Quantity = cartItem.Quantity
-			orderItem.Price = cartItem.Product.Price
-			orderItem.ProductPic = cartItem.Product.Pic
-			orderItem.ProductName = cartItem.Product.Name
-			orderItem.ProductSubTitle = cartItem.Product.SubTitle
-			orderItem.ProductSkuCode = ""
-			orderItem.MemberNickname = utils.GetUserName(c)
-			orderItem.DeleteStatus = 0
-			orderItem.ProductCategoryId = cartItem.Product.ProductCategoryId
-			orderItem.ProductBrand = cartItem.Product.BrandName
-			orderItem.ProductSn = cartItem.Product.ProductSN
-			orderItem.ProductAttr = cartItem.SkuStock.SpData
-			orderItem.CouponAmount = 0
-			orderItem.IntegrationAmount = 0
-			orderItem.RealAmount = realAmount
-			orderItem.GiftIntegration = 0
-			orderItem.GiftGrowth = 0
-			order.OrderItemList = append(order.OrderItemList, &orderItem)
-
-			//
-			orderDescription = fmt.Sprintf("%s x%d ", cartItem.Product.Name, cartItem.Quantity)
-			var goodDetail payRequest.GoodsDetail
-			goodDetail.MerchantGoodsId = utils.String(cartItem.Product.ProductSN)
-			goodDetail.GoodsName = utils.String(cartItem.Product.Name)
-			goodDetail.Quantity = utils.Int64(int64(cartItem.Quantity))
-			goodDetail.UnitPrice = utils.Int64(int64(cartItem.SkuStock.PromotionPrice * 100))
-			goodsDetail = append(goodsDetail, goodDetail)
-		}
-
-		// 进行库存锁定
-		//if err := e.LockTmpStock(productTmpCartList); err != nil {
-		//	global.GVA_LOG.Error("锁定库存失败!", zap.Error(err))
-		//	response.FailWithMessage("锁定库存失败", c)
-		//	return
-		//}
 	} else if orderReq.BuyType == 2 {
-		productCartList, err := orderService.GetProductCartByIds(userId, orderReq.Ids)
+		productCommonCartList, err = orderService.GetProductCartByIds(userId, orderReq.Ids)
 		if err != nil {
-			global.GVA_LOG.Error("库存不足，无法下单", zap.Error(err))
-			response.FailWithMessage("库存不足，无法下单", c)
-			return
-		}
-
-		if !e.HasStock(productCartList) {
-			global.GVA_LOG.Error("获取购物车物品失败!", zap.Error(err))
+			global.GVA_LOG.Error("获取购物车物品失败", zap.Error(err))
 			response.FailWithMessage("获取购物车物品失败", c)
 			return
 		}
-
-		for _, cartItem := range productCartList {
-			productData, err := productService.GetProductByID(cartItem.ProductId)
-			if err != nil {
-				global.GVA_LOG.Error("[GenerateOrder]获取物品失败!", zap.Error(err))
-				response.FailWithMessage("[GenerateOrder]获取物品失败", c)
-				return
-			}
-			_, promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(productData, nil)
-			var orderItem product.OrderItem
-			order.PromotionAmount += reduceAmount
-			order.PromotionInfo = fmt.Sprintf("满减优惠：%s", promotionMessage)
-			orderItem.PromotionAmount = reduceAmount
-			orderItem.PromotionName = fmt.Sprintf("满减优惠：%s", promotionMessage)
-			// 计算优惠前总金额
-			order.TotalAmount += order.TotalAmount + cartItem.Product.Price*float32(cartItem.Quantity)
-			// 该商品经过优惠后的实际金额
-			realAmount := cartItem.Product.Price*float32(cartItem.Quantity) - reduceAmount
-			if realAmount < 0 {
-				global.GVA_LOG.Error("[GenerateOrder]获取价格计算失败!", zap.Error(err))
-				response.FailWithMessage("[GenerateOrder]获取价格计算失败", c)
-				return
-			}
-			//orderItem.OrderId = order.ID
-			orderItem.ProductId = cartItem.ProductId
-			orderItem.ProductSkuId = cartItem.SkuStock.SkuCode
-			orderItem.UserId = cartItem.UserId
-			orderItem.Quantity = cartItem.Quantity
-			orderItem.Price = cartItem.Product.Price
-			orderItem.ProductPic = cartItem.Product.Pic
-			orderItem.ProductName = cartItem.Product.Name
-			orderItem.ProductSubTitle = cartItem.Product.SubTitle
-			orderItem.ProductSkuCode = ""
-			orderItem.MemberNickname = utils.GetUserName(c)
-			orderItem.DeleteStatus = 0
-			orderItem.ProductCategoryId = cartItem.Product.ProductCategoryId
-			orderItem.ProductBrand = cartItem.Product.BrandName
-			orderItem.ProductSn = cartItem.Product.ProductSN
-			orderItem.ProductAttr = cartItem.SkuStock.SpData
-			orderItem.CouponAmount = 0
-			orderItem.IntegrationAmount = 0
-			orderItem.RealAmount = realAmount
-			orderItem.GiftIntegration = 0
-			orderItem.GiftGrowth = 0
-			order.OrderItemList = append(order.OrderItemList, &orderItem)
-
-			//
-			orderDescription = fmt.Sprintf("%s x%d ", cartItem.Product.Name, cartItem.Quantity)
-			var goodDetail payRequest.GoodsDetail
-			goodDetail.MerchantGoodsId = utils.String(cartItem.Product.ProductSN)
-			goodDetail.GoodsName = utils.String(cartItem.Product.Name)
-			goodDetail.Quantity = utils.Int64(int64(cartItem.Quantity))
-			goodDetail.UnitPrice = utils.Int64(int64(cartItem.SkuStock.PromotionPrice * 100))
-			goodsDetail = append(goodsDetail, goodDetail)
-		}
-		// 进行库存锁定
-		//if err := e.LockStock(productCartList); err != nil {
-		//	global.GVA_LOG.Error("锁定库存失败!", zap.Error(err))
-		//	response.FailWithMessage("锁定库存失败", c)
-		//	return
-		//}
 	}
 
-	n, err := snowflake.NewNode(1)
+	if !e.HasCommonStock(productCommonCartList) {
+		global.GVA_LOG.Error("库存不足，无法下单", zap.Error(err))
+		response.FailWithMessage("库存不足，无法下单", c)
+		return
+	}
+
+	cartPromotionItemList, err := e.ListPromotion(productCommonCartList)
 	if err != nil {
-		global.GVA_LOG.Error("创建id失败!", zap.Error(err))
+		global.GVA_LOG.Error("获取促销商品失败", zap.Error(err))
+		response.FailWithMessage("获取促销商品失败", c)
+		return
 	}
+	orderItemList := make([]*product.CartPromotionItem, 0)
+
+	for _, cartItem := range cartPromotionItemList {
+		var orderItem product.CartPromotionItem
+
+		//orderItem.OrderId = order.ID
+		orderItem.PromotionName = cartItem.PromotionName
+		orderItem.ProductId = cartItem.ProductId
+		orderItem.ProductSkuId = cartItem.ProductSkuId
+		orderItem.UserId = cartItem.UserId
+		orderItem.Quantity = cartItem.Quantity
+		orderItem.Price = cartItem.Price
+		orderItem.ProductPic = cartItem.ProductPic
+		orderItem.ProductName = cartItem.ProductName
+		orderItem.ProductSubTitle = cartItem.ProductSubTitle
+		orderItem.ProductSkuCode = ""
+		orderItem.MemberNickname = utils.GetUserName(c)
+		orderItem.DeleteStatus = 0
+		orderItem.ProductCategoryId = cartItem.ProductCategoryId
+		orderItem.ProductBrand = cartItem.ProductBrand
+		orderItem.ProductSN = cartItem.ProductSN
+		orderItem.ProductAttr = cartItem.ProductAttr
+		orderItem.CouponAmount = 0
+		orderItem.IntegrationAmount = 0
+		orderItem.RealAmount = cartItem.RealAmount
+		orderItem.GiftIntegration = 0
+		orderItem.GiftGrowth = 0
+		orderItemList = append(orderItemList, &orderItem)
+
+		//
+		orderDescription = fmt.Sprintf("%s x%d ", cartItem.ProductName, cartItem.Quantity)
+		var goodDetail payRequest.GoodsDetail
+		goodDetail.MerchantGoodsId = utils.String(cartItem.ProductSN)
+		goodDetail.GoodsName = utils.String(cartItem.ProductName)
+		goodDetail.Quantity = utils.Int64(int64(cartItem.Quantity))
+		goodDetail.UnitPrice = utils.Int64(int64(cartItem.Price * 100))
+		goodsDetail = append(goodsDetail, goodDetail)
+	}
+	//var order product.Order
+	//order.TotalAmount = 0
+	//order.PayAmount = 0
+	//order.PromotionAmount = 0
+	//order.OrderItemList = orderItemList
+
+	//进行库存锁定
+	//if err := e.LockCommonStock(productCommonCartList); err != nil {
+	//	global.GVA_LOG.Error("锁定库存失败!", zap.Error(err))
+	//	response.FailWithMessage("锁定库存失败", c)
+	//	return
+	//}
+
+	// TODO: 优惠券计算
+	// 比较注册日期和购买时间，计算注册赠券是否足够
+	if orderReq.CouponId != 0 {
+		couponHistoryDetail, err := e.GetUseCoupon(userId, cartPromotionItemList, orderReq.CouponId)
+		if err != nil || couponHistoryDetail == nil {
+			global.GVA_LOG.Error("获取优惠券失败!", zap.Error(err))
+			response.FailWithMessage("获取优惠券失败", c)
+			return
+		}
+		// 对下单商品的优惠券进行处理
+		e.HandleCouponAmount(orderItemList, *couponHistoryDetail)
+	}
+
+	// 计算order_item的实付金额
+	e.HandleRealAmount(orderItemList)
+	// 根据商品合计、运费、活动优惠、优惠券、积分计算应付金额
+	order := product.Order{
+		TotalAmount:     e.CalcTotalAmount(orderItemList),
+		PromotionAmount: e.CalcPromotionAmount(orderItemList),
+		PromotionInfo:   e.GetOrderPromotionInfo(orderItemList),
+	}
+
+	if orderReq.CouponId != 0 {
+		order.CouponId = orderReq.CouponId
+		order.CouponAmount = e.CalcCouponAmount(orderItemList)
+	}
+
+	// 总金额+运费-促销优惠-优惠券优惠-积分抵扣
+	order.DiscountAmount = 0
+	order.FreightAmount = 0                                           // 运费
+	order.IntegrationAmount = float32(orderReq.UseIntegration / 1000) // 1000积分抵1元
+	order.PayAmount = order.TotalAmount + order.FreightAmount -
+		order.PromotionAmount - order.CouponAmount - order.IntegrationAmount
+	if order.PayAmount < 0 {
+		global.GVA_LOG.Error("[GenerateOrder]获取价格计算错误!", zap.Error(err))
+		response.FailWithMessage("获取价格计算错误", c)
+		return
+	}
+
 	order.UserId = userId
 	order.CouponId = orderReq.CouponId
-	order.OrderSn = fmt.Sprintf("%d", n.Generate())
+	order.OrderSn = e.GenerateOrderSn(order)
 	userName := utils.GetNickName(c)
 	if len(userName) < 1 {
 		userName = utils.GetTelephone(c)
 	}
 	order.UserName = userName
-	order.FreightAmount = 0
-	order.PayAmount += order.TotalAmount - order.PromotionAmount
-	order.IntegrationAmount = float32(orderReq.UseIntegration / 1000) // 1000积分抵1元
-	order.CouponAmount = 0
-	order.DiscountAmount = 0
+	// 支付方式：0->未支付；1->支付宝；2->微信
 	order.PayType = orderReq.PayType
+	// 订单来源：0->PC订单；1->app订单
 	order.SourceType = 1
+	// 订单状态：0->待付款；1->待发货；2->已发货；3->已完成；4->已关闭；5->无效订单
 	order.Status = 0
+	// 订单类型：0->正常订单；1->秒杀订单
 	order.OrderType = 0
+
 	//order.DeliveryCompany = ""
 	//order.DeliverySn = ""
 	order.AutoConfirmDay = 7
-	order.Integration = 100
+	// 计算赠送积分
+	order.Integration = e.CalcGifIntegration(orderItemList)
 	order.Growth = 100
 	//order.BillType = 0
 	//order.BillHeader = ""
@@ -322,21 +282,25 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 	//order.BillReceiverPhone = ""
 	//order.BillReceiverEmail = ""
 
+	// 收货人信息：姓名、电话、邮编、地址
 	address, err := accountService.GetMemberReceiveAddressById(orderReq.MemberReceiveAddressId)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	order.ReceiverPhone = address.PhoneNumber
+	order.ReceiverPhone = address.Telephone
 	order.ReceiverName = address.Name
 	order.ReceiverPostCode = address.PostCode
 	order.ReceiverProvince = address.Province
 	order.ReceiverCity = address.City
 	order.ReceiverRegion = address.Region
 	order.ReceiverDetailAddress = address.DetailAddress
+
 	order.Note = orderReq.Note
+	// 0->未确认；1->已确认
 	order.ConfirmStatus = 0
 	order.DeleteStatus = 0
+
 	order.UseIntegration = orderReq.UseIntegration
 	order.PaymentTime = time.Now()
 
@@ -358,6 +322,33 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		return
 	}
 
+	// 如使用优惠券c
+	if order.CouponId != 0 {
+		if err := couponService.UpdateCouponStatus(orderReq.CouponId, userId, 1); err != nil {
+			global.GVA_LOG.Error("更新优惠券状态失败!", zap.Error(err))
+			response.FailWithMessage("更新优惠券状态失败", c)
+			return
+		}
+	}
+
+	// 如使用积分需要扣除积分
+	if order.UseIntegration != 0 {
+		//	TODO: 更新积分
+	}
+
+	//删除购物车中的下单商品
+	//orderIdList := make([]int, 0)
+	//orderIdList = append(orderIdList, order.ID)
+	//_, err = orderService.DeleteManyOrder(orderIdList)
+	//if err != nil {
+	//	global.GVA_LOG.Error("更新订单数据失败!", zap.Error(err))
+	//	response.FailWithMessage("更新订单数据失败", c)
+	//	return
+	//}
+
+	var payReq payRequest.PrepayRequest
+	payReq.Appid = utils.String(orderReq.AppId)
+	payReq.Mchid = utils.String(consts.MachID)
 	payReq.Description = utils.String(orderDescription)
 	payReq.OutTradeNo = utils.String(order.OrderSn)
 	payReq.TimeExpire = utils.String(time.Now().Format(time.RFC3339))
@@ -383,10 +374,10 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		DeviceId:      utils.String("013467007045764"),
 		PayerClientIp: utils.String(orderReq.IP),
 		StoreInfo: &payRequest.StoreInfo{
-			Address:  utils.String("河南省商丘市中骏雍景台27栋113商铺"),
+			Address:  utils.String("浙江省绍兴市诸暨市大唐街道"),
 			AreaCode: utils.String("476100"),
 			Id:       utils.String("0001"),
-			Name:     utils.String("猪迪克星动乐园"),
+			Name:     utils.String("怡驰针织"),
 		},
 	}
 	res, _, err := jspaymentService.PrepayWithRequestPayment(payReq)
@@ -404,34 +395,14 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		return
 	}
 
-	// 如使用优惠券更新优惠券使用状态
-	if order.CouponId != 0 {
-		//	TODO: 更新优惠券状态
-	}
-
-	// 如使用积分需要扣除积分
-	if order.UseIntegration != 0 {
-		//	TODO: 更新积分
-	}
-
-	// 删除购物车中的下单商品
-	//orderIdList := make([]int, 0)
-	//orderIdList = append(orderIdList, order.ID)
-	//_, err = orderService.DeleteManyOrder(orderIdList)
-	//if err != nil {
-	//	global.GVA_LOG.Error("更新订单数据失败!", zap.Error(err))
-	//	response.FailWithMessage("更新订单数据失败", c)
-	//	return
-	//}
-
 	var data payRes.GenerateOrderResponse
 	data.OrderId = order.ID
 	data.Payment = &res
 	response.OkWithData(data, c)
 }
 
-// HasStock 判断下单商品是否都有库存
-func (e *OrderApi) HasStock(cartItemList []product.CartItem) bool {
+// HasCommonStock 判断下单商品是否都有库存
+func (e *OrderApi) HasCommonStock(cartItemList []*product.CartCommonItem) bool {
 	for _, cartItem := range cartItemList {
 		if cartItem.SkuStock.Stock <= 0 || cartItem.SkuStock.Stock < cartItem.Quantity {
 			return false
@@ -441,9 +412,9 @@ func (e *OrderApi) HasStock(cartItemList []product.CartItem) bool {
 }
 
 // 进行库存锁定
-func (e *OrderApi) LockStock(cartItemList []product.CartItem) error {
+func (e *OrderApi) LockCommonStock(cartItemList []*product.CartCommonItem) error {
 	for _, cartPromotionItem := range cartItemList {
-		count, err := productService.UpdateProductSkuStockForStock(cartPromotionItem.SkuStockId, cartPromotionItem.ProductId)
+		count, err := productService.UpdateProductSkuStockForStock(cartPromotionItem.SkuStockId, cartPromotionItem.Quantity)
 		if err != nil {
 			return fmt.Errorf("修改库存时失败: %v", err)
 		}
@@ -454,28 +425,187 @@ func (e *OrderApi) LockStock(cartItemList []product.CartItem) error {
 	return nil
 }
 
-// HasStock 判断下单商品是否都有库存
-func (e *OrderApi) HasTmpStock(cartItemList []product.CartTmpItem) bool {
-	for _, cartItem := range cartItemList {
-		if cartItem.SkuStock.Stock <= 0 || cartItem.SkuStock.Stock < cartItem.Quantity {
-			return false
+func (e *OrderApi) GetUseCoupon(userId int, cartItemList []*product.CartPromotionItem, couponId int) (couponHistory *product.CouponHistory, err error) {
+	var couponApi CouponApi
+	couponHistoryDetailList, err := couponApi.ListCart(userId, cartItemList, 1)
+	if err != nil {
+		return nil, err
+	}
+	for _, couponHistoryDetail := range couponHistoryDetailList {
+		if couponHistoryDetail.CouponId == couponId {
+			return couponHistoryDetail, nil
 		}
 	}
-	return true
+	return nil, nil
 }
 
-// 进行库存锁定
-func (e *OrderApi) LockTmpStock(cartItemList []product.CartTmpItem) error {
-	for _, cartPromotionItem := range cartItemList {
-		count, err := productService.UpdateProductSkuStockForStock(cartPromotionItem.SkuStockId, cartPromotionItem.ProductId)
-		if err != nil {
-			return fmt.Errorf("修改库存时失败: %v", err)
+// ListPromotion
+func (e *OrderApi) ListPromotion(cartItemList []*product.CartCommonItem) (cartPromotionItemList []*product.CartPromotionItem, err error) {
+	for _, cart := range cartItemList {
+		var cartPromotionItem product.CartPromotionItem
+		cartPromotionItem.ID = cart.ID
+		cartPromotionItem.CreatedAt = cart.CreatedAt
+		cartPromotionItem.Quantity = cart.Quantity
+		cartPromotionItem.ProductPic = cart.SkuStock.Pic
+		cartPromotionItem.ProductName = cart.Product.Name
+		cartPromotionItem.ProductId = cart.ProductId
+		cartPromotionItem.ProductCategoryId = cart.Product.ProductCategoryId
+		promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(cart.Product, nil)
+		cartPromotionItem.ReduceAmount = reduceAmount
+		cartPromotionItem.Price = cart.Product.Price
+		cartPromotionItem.PromotionMessage = fmt.Sprintf("满减优惠：%s", promotionMessage)
+		cartPromotionItem.RealStock = cart.SkuStock.Stock
+		// 该商品经过优惠后的实际金额
+		realAmount := cart.Product.Price*float32(cart.Quantity) - reduceAmount
+		cartPromotionItem.RealAmount = realAmount
+		cartPromotionItemList = append(cartPromotionItemList, &cartPromotionItem)
+	}
+
+	return cartPromotionItemList, nil
+}
+
+func (e *OrderApi) HandleCouponAmount(orderItemList []*product.CartPromotionItem, couponHistoryDetail product.CouponHistory) {
+	coupon := couponHistoryDetail.Coupon
+	switch coupon.UseType {
+	case 0: // 全场通用
+		e.CalcPerCouponAmount(orderItemList, coupon)
+	case 1: // 指定分类
+		couponOrderItemList := e.GetCouponOrderItemByRelation(couponHistoryDetail, orderItemList, 0)
+		e.CalcPerCouponAmount(couponOrderItemList, coupon)
+	case 2: // 指定商品
+		couponOrderItemList := e.GetCouponOrderItemByRelation(couponHistoryDetail, orderItemList, 1)
+		e.CalcPerCouponAmount(couponOrderItemList, coupon)
+	}
+}
+
+/**
+ * 获取与优惠券有关系的下单商品
+ *
+ * @param couponHistoryDetail 优惠券详情
+ * @param orderItemList       下单商品
+ * @param refType             使用关系类型：0->相关分类；1->指定商品
+ */
+func (e *OrderApi) GetCouponOrderItemByRelation(couponHistoryDetail product.CouponHistory,
+	orderItemList []*product.CartPromotionItem, refType int32) []*product.CartPromotionItem {
+	result := make([]*product.CartPromotionItem, 0)
+	switch refType {
+	case 0:
+		categoryIdsMap := make(map[int]bool, 0)
+		for _, productCategoryRelation := range couponHistoryDetail.Coupon.ProductCategoryRelationList {
+			categoryIdsMap[productCategoryRelation.ProductCategoryId] = true
 		}
-		if count == 0 {
-			return fmt.Errorf("库存不足, 无法下单")
+		for i, orderItem := range orderItemList {
+			if _, ok := categoryIdsMap[orderItem.ProductCategoryId]; ok {
+				result = append(result, orderItem)
+			} else {
+				orderItemList[i].CouponAmount = 0
+			}
+		}
+	case 1:
+		productIdsMap := make(map[int]bool, 0)
+		for _, productRelation := range couponHistoryDetail.Coupon.ProductRelationList {
+			productIdsMap[productRelation.ProductId] = true
+		}
+		for i, orderItem := range orderItemList {
+			if _, ok := productIdsMap[orderItem.ProductId]; ok {
+				result = append(result, orderItem)
+			} else {
+				orderItemList[i].CouponAmount = 0
+			}
 		}
 	}
-	return nil
+	return result
+}
+
+/**
+ * 对每个下单商品进行优惠券金额分摊的计算
+ *
+ * @param orderItemList 可用优惠券的下单商品商品
+ */
+func (e *OrderApi) CalcPerCouponAmount(orderItemList []*product.CartPromotionItem, coupon product.Coupon) {
+	totalAmount := e.CalcTotalAmount(orderItemList)
+	for i, orderItem := range orderItemList {
+		// (商品价格/可用商品总价)*优惠券面额
+		couponAmount := mathutil.RoundHalfEven(float64(orderItem.Price/totalAmount)*float64(coupon.Amount), 3)
+		orderItemList[i].CouponAmount = float32(couponAmount)
+	}
+}
+
+// CalcTotalAmount 计算总金额
+func (e *OrderApi) CalcTotalAmount(orderItemList []*product.CartPromotionItem) float32 {
+	var totalAmount float32
+	for _, item := range orderItemList {
+		totalAmount += item.Price * float32(item.Quantity)
+	}
+	return totalAmount
+}
+
+func (e *OrderApi) HandleRealAmount(orderItemList []*product.CartPromotionItem) {
+	for i, orderItem := range orderItemList {
+		// 原价-促销优惠-优惠券抵扣-积分抵扣
+		realAmount := orderItem.Price - orderItem.PromotionAmount -
+			orderItem.CouponAmount - orderItem.IntegrationAmount
+		orderItemList[i].RealAmount = realAmount
+	}
+}
+
+// CalcPromotionAmount 计算订单活动优惠
+func (e *OrderApi) CalcPromotionAmount(orderItemList []*product.CartPromotionItem) float32 {
+	var promotionAmount float32
+	for _, orderItem := range orderItemList {
+		if orderItem.PromotionAmount != 0 {
+			promotionAmount += orderItem.PromotionAmount * float32(orderItem.Quantity)
+		}
+	}
+	return promotionAmount
+}
+
+// GetOrderPromotionInfo 获取订单促销信息
+func (e *OrderApi) GetOrderPromotionInfo(orderItemList []*product.CartPromotionItem) string {
+	promotionNameList := make([]string, 0, len(orderItemList))
+	for _, orderItem := range orderItemList {
+		promotionNameList = append(promotionNameList, orderItem.PromotionName)
+	}
+	return strings.Join(promotionNameList, ";")
+}
+
+// CalcCouponAmount 计算订单优惠券金额
+func (e *OrderApi) CalcCouponAmount(orderItemList []*product.CartPromotionItem) float32 {
+	var couponAmount float32
+	for _, orderItem := range orderItemList {
+		if orderItem.CouponAmount != 0 {
+			couponAmount += orderItem.CouponAmount * float32(orderItem.Quantity)
+		}
+	}
+	return couponAmount
+}
+
+// CalcGifIntegration 计算该订单赠送的积分
+func (e *OrderApi) CalcGifIntegration(orderItemList []*product.CartPromotionItem) int {
+	var sum int
+	for _, orderItem := range orderItemList {
+		sum += orderItem.GiftIntegration * orderItem.Quantity
+	}
+	return sum
+}
+
+// GenerateOrderSn 生成18位订单编号:8位日期+2位平台号码+2位支付方式+6位以上自增id
+func (e *OrderApi) GenerateOrderSn(order product.Order) string {
+	ctx := context.Background()
+	var sb strings.Builder
+	date := time.Now().Format("20060102")
+	key := global.GVA_CONFIG.Wechat.AppID + ":" + global.GVA_CONFIG.Wechat.Secret + ":" + date
+	increment := redis.Cache().Incr(ctx, key)
+	sb.WriteString(date)
+	sb.WriteString(fmt.Sprintf("%02d", order.SourceType))
+	sb.WriteString(fmt.Sprintf("%02d", order.PayType))
+	incrementStr := fmt.Sprintf("%06d", increment)
+	if len(incrementStr) > 6 {
+		sb.WriteString(incrementStr)
+	} else {
+		sb.WriteString(incrementStr[:6])
+	}
+	return sb.String()
 }
 
 func (e *OrderApi) GetOrderDetail(c *gin.Context) {
@@ -534,13 +664,21 @@ func (e *OrderApi) GetOrderList(c *gin.Context) {
 }
 
 func (e *OrderApi) PaySuccess(c *gin.Context) {
-	//TODO: 检查是否是秒杀活动商品，如果是，检查是否超出付款时间
 	var paySuccess wechatReq.PaySuccessRequest
 	err := c.ShouldBindJSON(&paySuccess)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
+	//删除购物车中的下单商品
+	//orderIdList := make([]int, 0)
+	//orderIdList = append(order IdList, order.ID)
+	//_, err = orderService.DeleteManyOrder(orderIdList)
+	//if err != nil {
+	//	global.GVA_LOG.Error("更新订单数据失败!", zap.Error(err))
+	//	response.FailWithMessage("更新订单数据失败", c)
+	//	return
+	//}
 	err = orderService.UpdateOrderStatus(&paySuccess, 1)
 	if err != nil {
 		global.GVA_LOG.Error("更新订单数据失败!", zap.Error(err))

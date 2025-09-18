@@ -47,7 +47,7 @@ func (i *initBrand) InitializeData(ctx context.Context) (next context.Context, e
 
 	entities := []productModel.Brand{
 		{
-			Name:                "猪迪克星动乐园",
+			Name:                "自营",
 			FirstLetter:         "Z",
 			Sort:                500,
 			FactoryStatus:       1,
@@ -56,7 +56,7 @@ func (i *initBrand) InitializeData(ctx context.Context) (next context.Context, e
 			ProductCommentCount: 100,
 			Logo:                "https://cooller.oss-cn-beijing.aliyuncs.com/resource/uploads/1/1739925089551388672_logo.jpg",
 			BigPic:              "https://cooller.oss-cn-beijing.aliyuncs.com/resource/uploads/1/1739601433512120320_%E5%BE%AE%E4%BF%A1%E5%9B%BE%E7%89%87_20231109032800.png",
-			BrandStory:          "猪迪克星动乐园是以《我的朋友猪迪克》动画片为背景打造的儿童乐园。有免费玩具、太空沙、考古、手工艺品、淘气堡、海洋球、互动投影、双排滑梯、极限蹦床、沙滩乐园、萌宠转马、积木墙等项目，旨在让孩子们远离电视，健康快乐成长。",
+			BrandStory:          "团购供销社，一手货源，物美价廉。",
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {

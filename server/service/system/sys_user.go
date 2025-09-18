@@ -1,7 +1,6 @@
 package system
 
 import (
-	"cooller/server/model/business"
 	"errors"
 	"fmt"
 	"time"
@@ -244,48 +243,5 @@ func (userService *UserService) FindUserByUuid(uuid string) (user *system.SysUse
 
 func (userService *UserService) ResetPassword(ID int) (err error) {
 	err = global.GVA_DB.Model(&system.SysUser{}).Where("id = ?", ID).Update("password", utils.BcryptHash("123456")).Error
-	return err
-}
-
-func (userService *UserService) CreateWXAccount(e *system.SysUser) (err error) {
-	//db := global.GVA_DB.Model(&system.SysUser{})
-	//var wxUser system.SysUser
-	//result := db.Where("telephone = ?", e.Phone).First(&wxUser)
-	//if result.Error != nil {
-	//	if result.Error == gorm.ErrRecordNotFound {
-	//		e.UUID = uuid.Must(uuid.NewV4())
-	//		err = global.GVA_DB.Debug().Create(&e).Error
-	//		return err
-	//	}
-	//	err = result.Error
-	//} else {
-	//	err = db.Debug().Where("open_id = ?", e.OpenId).Updates(map[string]interface{}{"nick_name": e.NickName,
-	//		"gender": e.Gender, "avatar_url": e.AvatarUrl}).Error
-	//	return err
-	//}
-
-	return err
-}
-
-func (userService *UserService) GetWXAccountByOpenID(openId string) (user system.SysUser, err error) {
-	err = global.GVA_DB.Where("open_id = ?", openId).First(&user).Error
-	return user, err
-}
-
-//func (userService *UserService) UpdateWXAccountInfo(e *system.SysUser) (err error) {
-//	db := global.GVA_DB.Model(&system.SysUser{})
-//
-//	err = db.Debug().Where("open_id = ?", e.OpenId).Updates(map[string]interface{}{"nick_name": e.NickName,
-//		"gender": e.Gender, "avatar_url": e.AvatarUrl}).Error
-//	return err
-//}
-
-func (userService *UserService) ResetWXNickName(e *business.Customer) (err error) {
-	err = global.GVA_DB.Save(e).Error
-	return err
-}
-
-func (userService *UserService) RecordShareScanAccount(openId *string) (err error) {
-	err = global.GVA_DB.Debug().Where("open_id = ?", openId).UpdateColumn("share_count", gorm.Expr("share_count+?", 1)).Error
 	return err
 }

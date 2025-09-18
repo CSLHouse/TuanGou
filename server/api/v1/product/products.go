@@ -1,7 +1,6 @@
 package product
 
 import (
-	wechatApi "cooller/server/api/v1/wechat"
 	"cooller/server/global"
 	"cooller/server/model/common/request"
 	"cooller/server/model/common/response"
@@ -72,18 +71,17 @@ func (e *ProductApi) GetProductByID(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	product, err := productService.GetProductByID(reqId.ID)
+	productData, err := productService.GetProductByID(reqId.ID)
 	if err != nil {
 		global.GVA_LOG.Error("获取商品失败!", zap.Error(err))
 		response.FailWithMessage("获取商品失败", c)
 		return
 	}
-	product, _, _ = wechatApi.CalculateProductPromotionPrice(product, nil)
 	// 买家id是以字符串方式存储：12,46,88,需要分割且转换一下
 	var buyersIdList []int
 	var avatarsList wechatRequest.BuyersInfo
-	if len(product.Buyers) > 0 {
-		buyersIdStrList := strings.Split(product.Buyers, ",")
+	if len(productData.Buyers) > 0 {
+		buyersIdStrList := strings.Split(productData.Buyers, ",")
 		for _, buyersIdStr := range buyersIdStrList {
 			buyersId, err := strconv.Atoi(buyersIdStr)
 			if err != nil {
@@ -103,7 +101,7 @@ func (e *ProductApi) GetProductByID(c *gin.Context) {
 	}
 
 	var productDetails wechatRes.ProductDetails
-	productDetails.Product = product
+	productDetails.Product = productData
 	productDetails.BuyersList = avatarsList
 	response.OkWithData(productDetails, c)
 }

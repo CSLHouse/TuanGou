@@ -1,5 +1,7 @@
 package response
 
+import "cooller/server/model/wechat"
+
 type WXLoginRes struct {
 	ExpireIn int    `json:"expires_in"`
 	OpenID   string `json:"openid"`
@@ -19,3 +21,13 @@ type WXPhoneNum struct {
 //	Token       string `json:"token" form:"token" gorm:"comment:token;size:500"`
 //	Permissions uint   `json:"permissions" form:"permissions" gorm:"column:权限"`
 //}
+
+type WXLoginResponse struct {
+	Customer  wechat.WXUser `json:"customer"`
+	Token     string        `json:"token"`
+	ExpiresAt int64         `json:"expiresAt"`
+}
+
+type VIPMemberResponse struct {
+	Member wechat.WXUser `json:"member"`
+}

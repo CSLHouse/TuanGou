@@ -24,6 +24,8 @@ func (i *initCouponGroup) MigrateTable(ctx context.Context) (context.Context, er
 	return ctx, db.AutoMigrate(
 		&productModel.Coupon{},
 		&productModel.CouponHistory{},
+		&productModel.CouponProductRelation{},
+		&productModel.CouponProductCategoryRelation{},
 	)
 }
 

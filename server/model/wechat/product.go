@@ -9,12 +9,12 @@ import (
 // Advertise 首页轮播广告表
 type Advertise struct {
 	global.GVA_MODEL
-	Name       string `json:"name" gorm:"not null;comment:名称;size:100"`                            // 套餐ID
+	Name       string `json:"name" gorm:"not null;comment:名称;size:100"`                  // 套餐ID
 	Type       int    `json:"type" form:"type" gorm:"comment:轮播位置：0->PC首页轮播；1->app首页轮播"` // 套餐名称
-	Pic        string `json:"pic" form:"pic" gorm:"comment:图片"`                                    // 套餐类型
-	StartTime  string `json:"startTime" form:"startTime" gorm:"comment:开始时间"`                    // 套餐价格
-	EndTime    string `json:"endTime" form:"endTime" gorm:"comment:结束时间"`                        // 天数/次数/金额
-	State      int    `json:"state" form:"state" gorm:"comment:上下线状态：0->下线；1->上线"`          // 状态
+	Pic        string `json:"pic" form:"pic" gorm:"comment:图片"`                          // 套餐类型
+	StartTime  string `json:"startTime" form:"startTime" gorm:"comment:开始时间"`            // 套餐价格
+	EndTime    string `json:"endTime" form:"endTime" gorm:"comment:结束时间"`                // 天数/次数/金额
+	State      int    `json:"state" form:"state" gorm:"comment:上下线状态：0->下线；1->上线"`       // 状态
 	ClickCount int    `json:"clickCount" form:"clickCount" gorm:"comment:点击数"`
 	OrderCount int    `json:"orderCount" form:"orderCount" gorm:"comment:下单数"`
 	Url        string `json:"url" form:"url" gorm:"comment:链接地址;size:500"`
@@ -52,8 +52,8 @@ func (Advertise) TableName() string {
 type FlashPromotion struct {
 	global.GVA_MODEL
 	Title     string    `json:"title" gorm:"not null;comment:名称;size:100"`
-	StartDate time.Time `json:"startDate" form:"startDate" gorm:"comment:开始日期"`       // 套餐价格
-	EndDate   time.Time `json:"endDate" form:"endDate" gorm:"comment:结束日期"`           // 天数/次数/金额
+	StartDate time.Time `json:"startDate" form:"startDate" gorm:"comment:开始日期"`     // 套餐价格
+	EndDate   time.Time `json:"endDate" form:"endDate" gorm:"comment:结束日期"`         // 天数/次数/金额
 	Status    int       `json:"status" form:"status" gorm:"comment:状态：0->下线；1->上线"` // 状态
 	//SysUserAuthorityID int   `json:"sys_user_authority_id" form:"sys_user_authority_id" gorm:"comment:管理角色ID"`
 }
@@ -99,7 +99,7 @@ func (FlashPromotionSession) TableName() string {
 type NewProduct struct {
 	global.GVA_MODEL
 	ProductId       int    `json:"productId" gorm:"not null;comment:物品序号"`
-	ProductName     string `json:"productName" form:"productName" gorm:"comment:物品名称"`                         // 套餐价格
+	ProductName     string `json:"productName" form:"productName" gorm:"comment:物品名称"`                     // 套餐价格
 	RecommendStatus int    `json:"recommendStatus" form:"recommendStatus" gorm:"comment:推荐状态：0->下线；1->上线"` // 状态
 	Sort            int    `json:"sort" form:"sort" gorm:"comment:排序"`
 	//SysUserAuthorityID int    `json:"sys_user_authority_id" form:"sys_user_authority_id" gorm:"comment:管理角色ID"`
@@ -113,7 +113,7 @@ func (NewProduct) TableName() string {
 // RecommendProduct 人气推荐商品表
 type RecommendProduct struct {
 	global.GVA_MODEL
-	ProductName     string `json:"productName" form:"productName" gorm:"comment:物品名称"`                         // 套餐价格
+	ProductName     string `json:"productName" form:"productName" gorm:"comment:物品名称"`                     // 套餐价格
 	RecommendStatus int    `json:"recommendStatus" form:"recommendStatus" gorm:"comment:推荐状态：0->下线；1->上线"` // 状态
 	Sort            int    `json:"sort" form:"sort" gorm:"comment:排序"`
 	//SysUserAuthorityID int   `json:"sys_user_authority_id" form:"sys_user_authority_id" gorm:"comment:管理角色ID"`

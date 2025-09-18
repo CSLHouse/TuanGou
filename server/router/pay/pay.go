@@ -12,7 +12,7 @@ func (e *PayRouter) InitPayRouter(Router *gin.RouterGroup, RouterPub *gin.Router
 	payRouterWithoutRecord := Router.Group("pay")
 	payApi := v1.ApiGroupApp.PayApiGroup.PayApi
 	{
-		payRouterWithoutRecord.POST("generateOrder", payApi.GenerateOrder)
+		//payRouterWithoutRecord.POST("generateOrder", payApi.GenerateOrder)
 		payRouterWithoutRecord.GET("detail", payApi.GetOrderDetail)
 		//payRouterWithoutRecord.POST("cancelOrder", payApi.CancelOrder)
 	}

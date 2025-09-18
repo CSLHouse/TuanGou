@@ -399,6 +399,11 @@ func (exa *ProductService) GetProductByID(id int) (product product.Product, err 
 	return product, err
 }
 
+func (exa *ProductService) GetProductCouponByID(id int) (productData product.Product, err error) {
+	err = global.GVA_DB.Debug().Where("id = ?", id).Preload("CouponList").First(&productData).Error
+	return productData, err
+}
+
 // GetBuysAvatarsList 根据买家id，获取买家头像
 func (exa *ProductService) GetBuysAvatarsList(buyersId []int) (avatars wechatRequest.BuyersInfo, err error) {
 	db := global.GVA_DB.Model(&wechat.WXUser{})
@@ -705,15 +710,16 @@ func (exa *ProductService) GetAllProductCategoryList() (productList []*product.P
 	return productList, err
 }
 
+func (exa *ProductService) GetProductCategoryById(id int) (productCategory product.ProductCategory, err error) {
+	db := global.GVA_DB.Model(&product.ProductCategory{})
+	err = db.Where("id = ?", id).Preload("CouponList").First(&productCategory).Error
+	return productCategory, err
+}
+
 func (exa *ProductService) GetProductAttributeValueByProductId(id int) (list []product.ProductAttributeValue, err error) {
 	db := global.GVA_DB.Model(&product.ProductAttributeValue{})
 	err = db.Where("product_id = ?", id).Find(&list).Error
 	return list, err
-}
-
-func (exa *ProductService) CreateProductMemberPrice(e *wechat.MemberPrice) (err error) {
-	err = global.GVA_DB.Create(&e).Error
-	return err
 }
 
 func (exa *ProductService) CreateProductAttributeValue(e *product.ProductAttributeValue) (err error) {

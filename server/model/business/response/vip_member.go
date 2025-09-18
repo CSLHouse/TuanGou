@@ -1,9 +1,5 @@
 package response
 
-import (
-	"cooller/server/model/business"
-)
-
 //	type VIPMemberResponseModel struct {
 //		CardID             string                   `json:"cardID" form:"cardID" gorm:"comment:会员卡号"`                           // 客户名
 //		Telephone          string                   `json:"telephone" form:"telephone" gorm:"comment:会员手机号"`                    // 客户手机号
@@ -16,12 +12,12 @@ import (
 //		VIPMembers         []VIPMemberResponseModel `json:"vipmembers" gorm:"foreignKey:sys_user_authority_id;"`
 //	}
 
-type WXLoginResponse struct {
-	Customer  business.Customer `json:"customer"`
-	Token     string            `json:"token"`
-	ExpiresAt int64             `json:"expiresAt"`
-}
-
-type VIPMemberResponse struct {
-	Member business.Customer `json:"member"`
-}
+//type WXLoginResponse struct {
+//	Customer  business.Customer `json:"customer"`
+//	Token     string            `json:"token"`
+//	ExpiresAt int64             `json:"expiresAt"`
+//}
+//
+//type VIPMemberResponse struct {
+//	Member business.Customer `json:"member"`
+//}

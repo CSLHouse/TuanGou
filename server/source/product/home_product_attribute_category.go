@@ -47,29 +47,9 @@ func (i *initHomeProductAttributeCategory) InitializeData(ctx context.Context) (
 
 	entities := []productModel.ProductAttributeCategory{
 		{
-			Name:           "体验卡",
-			AttributeCount: 1,
-			ParamCount:     0,
-		},
-		{
-			Name:           "单人票",
-			AttributeCount: 1,
-			ParamCount:     0,
-		},
-		{
-			Name:           "会员卡",
-			AttributeCount: 1,
-			ParamCount:     0,
-		},
-		{
-			Name:           "挖宝",
-			AttributeCount: 1,
-			ParamCount:     0,
-		},
-		{
-			Name:           "饮品",
-			AttributeCount: 1,
-			ParamCount:     0,
+			Name:           "服装-童袜",
+			AttributeCount: 2,
+			ParamCount:     1,
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {
@@ -85,7 +65,7 @@ func (i *initHomeProductAttributeCategory) DataInserted(ctx context.Context) boo
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("id = ?", 1).First(&productModel.ProductAttributeCategory{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("name = ?", "服装-童袜").First(&productModel.ProductAttributeCategory{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true

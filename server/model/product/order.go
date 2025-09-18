@@ -76,7 +76,7 @@ type OrderItem struct {
 	DeleteStatus      int     `json:"deleteStatus" gorm:"null;default null;comment:是否删除;"`
 	ProductCategoryId int     `json:"productCategoryId" gorm:"null;default null;comment:商品分类;"`
 	ProductBrand      string  `json:"productBrand" gorm:"null;default null;comment:品牌;"`
-	ProductSn         string  `json:"productSn" gorm:"null;default null;"`
+	ProductSN         string  `json:"productSN" gorm:"null;default null;"`
 	ProductAttr       string  `json:"productAttr" gorm:"null;default null;comment:商品销售属性:[{\"key\":\"颜色\",\"value\":\"颜色\"},{\"key\":\"容量\",\"value\":\"4G\"}];"`
 	PromotionName     string  `json:"promotionName" gorm:"null;default null;comment:商品促销名称;"`
 	PromotionAmount   float32 `json:"promotionAmount" gorm:"null;default null;comment:商品促销分解金额;"`
@@ -99,4 +99,57 @@ type OrderSetting struct {
 
 func (OrderSetting) TableName() string {
 	return "oms_order_setting"
+}
+
+// CartItem 购物车表
+type CartItem struct {
+	global.GVA_MODEL
+	ProductId  int      `json:"productId" gorm:"null;default null"`
+	SkuStockId int      `json:"skuStockId" gorm:"null;default null;"`
+	UserId     int      `json:"user_id" gorm:" not null;"`
+	Quantity   int      `json:"quantity" gorm:"null;default null;comment:购买数量;"`
+	Product    Product  `json:"product" gorm:"foreignKey:ProductId;"`
+	SkuStock   SkuStock `json:"skuStock" gorm:"foreignKey:SkuStockId;"`
+	Price      float32  `json:"price" gorm:"null;default null;comment:添加到购物车的价格;"`
+}
+
+func (CartItem) TableName() string {
+	return "oms_cart_item"
+}
+
+// CartTmpItem 直接购买的虚拟购物车表
+type CartTmpItem struct {
+	global.GVA_MODEL
+	ProductId  int      `json:"productId" gorm:"null;default null"`
+	SkuStockId int      `json:"skuStockId" gorm:"null;default null;"`
+	UserId     int      `json:"user_id" gorm:" not null;"`
+	Quantity   int      `json:"quantity" gorm:"null;default null;comment:购买数量;"`
+	Product    Product  `json:"product" gorm:"foreignKey:ProductId;"`
+	SkuStock   SkuStock `json:"skuStock" gorm:"foreignKey:SkuStockId;"`
+	Price      float32  `json:"price" gorm:"null;default null;comment:添加到购物车的价格;"`
+}
+
+func (CartTmpItem) TableName() string {
+	return "oms_cart_tmp_item"
+}
+
+type CartCommonItem struct {
+	global.GVA_MODEL
+	ProductId  int      `json:"productId" gorm:"null;default null"`
+	SkuStockId int      `json:"skuStockId" gorm:"null;default null;"`
+	UserId     int      `json:"user_id" gorm:" not null;"`
+	Quantity   int      `json:"quantity" gorm:"null;default null;comment:购买数量;"`
+	Product    Product  `json:"product" gorm:"foreignKey:ProductId;"`
+	SkuStock   SkuStock `json:"skuStock" gorm:"foreignKey:SkuStockId;"`
+	Price      float32  `json:"price" gorm:"null;default null;comment:添加到购物车的价格;"`
+	//CouponAmount float32  `json:"couponAmount"` // 优惠券优惠分解金额
+}
+
+type CartPromotionItem struct {
+	OrderItem        `json:",inline"`
+	PromotionMessage string  `json:"promotionMessage"` // 促销活动信息
+	ReduceAmount     float32 `json:"reduceAmount"`     // 促销活动减去的金额，针对每个商品
+	RealStock        int     `json:"realStock"`        // 剩余库存-锁定库存
+	Integration      int     `json:"integration"`      // 购买商品赠送积分
+	Growth           int     `json:"growth"`           // 购买商品赠送成长值
 }

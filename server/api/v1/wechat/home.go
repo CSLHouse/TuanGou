@@ -331,8 +331,7 @@ func (e *HomeApi) GetAllWechatContent(c *gin.Context) {
 				} else {
 					productList := make([]product.Product, 0)
 					for _, sessionProduct := range sessionProductList {
-						productData, _, _ := CalculateProductPromotionPrice(sessionProduct.Product, sessionProductList)
-						productList = append(productList, productData)
+						productList = append(productList, sessionProduct.Product)
 					}
 					homeFlashPromotion.ProductList = productList
 				}
@@ -576,7 +575,7 @@ func GetFlashPromotionProductList() (list []wechat.FlashPromotionProductRelation
 	return list
 }
 
-func CalculateProductPromotionPrice(product product.Product, list []wechat.FlashPromotionProductRelation) (p product.Product, promotionMessage string, reduceAmount float32) {
+func CalculateProductPromotionPrice(product product.Product, list []wechat.FlashPromotionProductRelation) (promotionMessage string, reduceAmount float32) {
 	promotion := product.PromotionType
 	// TODO: 各个优惠计算
 	if promotion == 0 {
@@ -624,5 +623,5 @@ func CalculateProductPromotionPrice(product product.Product, list []wechat.Flash
 		}
 	}
 
-	return product, promotionMessage, reduceAmount
+	return promotionMessage, reduceAmount
 }

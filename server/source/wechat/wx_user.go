@@ -23,7 +23,6 @@ func (i *initWXUser) MigrateTable(ctx context.Context) (context.Context, error) 
 	}
 	return ctx, db.AutoMigrate(
 		&wechatModel.WXUser{},
-		&wechatModel.MemberPrice{},
 	)
 }
 

@@ -16,12 +16,13 @@ func (s *CouponRouter) InitCouponRouter(Router *gin.RouterGroup, RouterPub *gin.
 		couponRouter.POST("create", couponApi.CreateCoupon)
 		couponRouter.PUT("update", couponApi.UpdateCoupon)
 		couponRouter.DELETE("delete", couponApi.DeleteCouponById)
-
+		couponRouter.POST("add", couponApi.AddUserCoupon)
 	}
 	{
+
 		couponPublicRouterWithoutRecord.GET("list", couponApi.GetCouponList)
 		couponPublicRouterWithoutRecord.GET("details", couponApi.GetCouponById)
 		couponPublicRouterWithoutRecord.GET("couponHistory", couponApi.GetCouponHistoryList)
-		//couponPublicRouterWithoutRecord.GET("listByProduct", couponApi.GetCouponListByProduct)
+		couponPublicRouterWithoutRecord.GET("listByProduct", couponApi.GetCouponListByProduct)
 	}
 }

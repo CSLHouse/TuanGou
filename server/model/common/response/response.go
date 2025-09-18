@@ -13,6 +13,7 @@ type Response struct {
 }
 
 const (
+	WARNING = 5
 	ERROR   = 7
 	SUCCESS = 0
 )
@@ -44,6 +45,10 @@ func OkWithDetailed(data interface{}, message string, c *gin.Context) {
 
 func Fail(c *gin.Context) {
 	Result(ERROR, map[string]interface{}{}, "操作失败", c)
+}
+
+func WarningWithMessage(message string, c *gin.Context) {
+	Result(WARNING, map[string]interface{}{}, message, c)
 }
 
 func FailWithMessage(message string, c *gin.Context) {

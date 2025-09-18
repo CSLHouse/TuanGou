@@ -198,34 +198,3 @@ type SkuStock struct {
 func (SkuStock) TableName() string {
 	return "pms_sku_stock"
 }
-
-// CartItem 购物车表
-type CartItem struct {
-	global.GVA_MODEL
-	ProductId  int      `json:"productId" gorm:"null;default null"`
-	SkuStockId int      `json:"skuStockId" gorm:"null;default null;"`
-	UserId     int      `json:"user_id" gorm:" not null;"`
-	Quantity   int      `json:"quantity" gorm:"null;default null;comment:购买数量;"`
-	Product    Product  `json:"product" gorm:"foreignKey:ProductId;"`
-	SkuStock   SkuStock `json:"skuStock" gorm:"foreignKey:SkuStockId;"`
-	Price      float32  `json:"price" gorm:"null;default null;comment:添加到购物车的价格;"`
-}
-
-func (CartItem) TableName() string {
-	return "oms_cart_item"
-}
-
-// CartTmpItem 直接购买的虚拟购物车表
-type CartTmpItem struct {
-	global.GVA_MODEL
-	ProductId  int      `json:"productId" gorm:"null;default null"`
-	SkuStockId int      `json:"skuStockId" gorm:"null;default null;"`
-	UserId     int      `json:"user_id" gorm:" not null;"`
-	Quantity   int      `json:"quantity" gorm:"null;default null;comment:购买数量;"`
-	Product    Product  `json:"product" gorm:"foreignKey:ProductId;"`
-	SkuStock   SkuStock `json:"skuStock" gorm:"foreignKey:SkuStockId;"`
-}
-
-func (CartTmpItem) TableName() string {
-	return "oms_cart_tmp_item"
-}

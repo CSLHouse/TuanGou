@@ -19,16 +19,52 @@ func (o *OrderService) GetProductCartById(userId int, id int) (cartItem product.
 	return cartItem, err
 }
 
-func (o *OrderService) GetProductCartByIds(userId int, ids []int) (cartItem []product.CartItem, err error) {
+func (o *OrderService) GetProductCartByIds(userId int, ids []int) (cartItem []*product.CartCommonItem, err error) {
 	db := global.GVA_DB.Model(&product.CartItem{})
-	db.Debug().Preload("Product").Preload("SkuStock").Where("user_id = ? and id in ?", userId, ids).First(&cartItem)
-	return cartItem, err
+	var list []product.CartItem
+	err = db.Debug().Preload("Product").Preload("SkuStock").Where("user_id = ? and id in ?", userId, ids).First(&list).Error
+	result := make([]*product.CartCommonItem, len(list))
+	for i, item := range list {
+		result[i] = &product.CartCommonItem{
+			GVA_MODEL: global.GVA_MODEL{
+				ID:        item.ID,
+				CreatedAt: item.CreatedAt,
+				UpdatedAt: item.UpdatedAt,
+			},
+			ProductId:  item.ProductId,
+			SkuStockId: item.SkuStockId,
+			UserId:     item.UserId,
+			Quantity:   item.Quantity,
+			Product:    item.Product,
+			SkuStock:   item.SkuStock,
+			Price:      item.Price,
+		}
+	}
+	return result, err
 }
 
-func (o *OrderService) GetProductTmpCartByIds(userId int, ids []int) (cartItem []product.CartTmpItem, err error) {
+func (o *OrderService) GetProductTmpCartByIds(userId int, ids []int) (cartItem []*product.CartCommonItem, err error) {
 	db := global.GVA_DB.Model(&product.CartTmpItem{})
-	db.Debug().Preload("Product").Preload("SkuStock").Where("user_id = ? and id in ?", userId, ids).First(&cartItem)
-	return cartItem, err
+	var list []product.CartTmpItem
+	err = db.Debug().Preload("Product").Preload("SkuStock").Where("user_id = ? and id in ?", userId, ids).First(&list).Error
+	result := make([]*product.CartCommonItem, len(list))
+	for i, item := range list {
+		result[i] = &product.CartCommonItem{
+			GVA_MODEL: global.GVA_MODEL{
+				ID:        item.ID,
+				CreatedAt: item.CreatedAt,
+				UpdatedAt: item.UpdatedAt,
+			},
+			ProductId:  item.ProductId,
+			SkuStockId: item.SkuStockId,
+			UserId:     item.UserId,
+			Quantity:   item.Quantity,
+			Product:    item.Product,
+			SkuStock:   item.SkuStock,
+			Price:      item.Price,
+		}
+	}
+	return result, err
 }
 
 func (o *OrderService) CreateOrder(e *product.Order) (err error) {

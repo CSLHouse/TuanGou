@@ -8,7 +8,8 @@ type WXUserInfo struct {
 	OpenID    string `json:"openId" binding:"required"`
 	NickName  string `json:"nickName" binding:"required"`
 	AvatarUrl string `json:"avatarUrl" binding:"required"`
-	Gender    int    `json:"gender"`
+	City      string `json:"city"`
+	Telephone string `json:"telephone" form:"telephone" gorm:"comment:手机号"`
 }
 
 type WXPhoneNumber struct {
