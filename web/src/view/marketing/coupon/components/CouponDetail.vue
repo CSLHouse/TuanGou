@@ -37,7 +37,7 @@
         </el-input>
       </el-form-item>
       <el-form-item label="每人限领：">
-        <el-input v-model="coupon.perLimit" placeholder="只能输入正整数" class="input-width">
+        <el-input v-model.number="coupon.perLimit" placeholder="只能输入正整数" class="input-width">
           <template slot="append">张</template>
         </el-input>
       </el-form-item>
@@ -102,7 +102,7 @@
             :label="item.productName"
             :value="item.productId">
             <span style="float: left">{{ item.productName }}</span>
-            <span style="float: right; color: #8492a6; font-size: 13px">NO.{{ item.productSn }}</span>
+            <span style="float: right; color: #8492a6; font-size: 13px">{{ item.productSN }}</span>
           </el-option>
         </el-select>
         <el-button @click="handleAddProductRelation()">添加</el-button>
@@ -114,7 +114,7 @@
             <template #default="scope">{{scope.row.productName}}</template>
           </el-table-column>
           <el-table-column label="货号" align="center"  width="120" >
-            <template #default="scope">NO.{{scope.row.productSn}}</template>
+            <template #default="scope">NO.{{scope.row.productSN}}</template>
           </el-table-column>
           <el-table-column label="操作" align="center" width="100">
             <template #default="scope">
@@ -242,25 +242,39 @@ const onSubmit = (formName) => {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
+        if (coupon.useType == 0) {
+          coupon.productCategoryRelationList = []
+          coupon.productRelationList = []
+        } else if (coupon.useType == 1) {
+          coupon.productRelationList = []
+        } else if (coupon.useType == 2) {
+          coupon.productCategoryRelationList = []
+        }
+
         if (props.isEdit) {
-          updateCoupon(coupon).then(() => {
-            couponFrom.value.resetFields();
-            ElMessageBox.confirm({
-              message: '修改成功',
-              type: 'success',
-              duration: 1000
-            });
-            router.back();
+          updateCoupon(coupon).then((res) => {
+            if (res.code == 0) {
+              couponFrom.value.resetFields();
+              ElMessageBox.confirm({
+                message: '修改成功',
+                type: 'success',
+                duration: 1000
+              });
+              router.back();
+            }
           });
         } else {
-          createCoupon(coupon).then(() => {
-            couponFrom.value.resetFields();
-            ElMessageBox.confirm({
-              message: '提交成功',
-              type: 'success',
-              duration: 1000
-            });
-            router.back();
+          createCoupon(coupon).then((res) => {
+            if (res.code == 0) {
+              couponFrom.value.resetFields();
+              ElMessageBox.confirm({
+                message: '提交成功',
+                type: 'success',
+                duration: 1000
+              });
+              router.back();
+            }
+            
           });
         }
       });
@@ -291,7 +305,7 @@ const searchProductMethod = async(query) => {
       selectProductOptions.value = productList.map(item => ({
         productId: item.id,
         productName: item.name,
-        productSn: item.productSN
+        productSN: item.productSN
       }));
     });
     console.log("----[searchProductMethod]------selectProductOptions:", selectProductOptions.value)
@@ -309,6 +323,10 @@ const handleAddProductRelation = () => {
     });
     return;
   }
+  if (!coupon.productRelationList) {
+    coupon.productRelationList = [];
+  }
+
   coupon.productRelationList.push(getProductById(selectProduct.value));
   selectProduct.value = null;
 };
@@ -325,6 +343,9 @@ const handleAddProductCategoryRelation = () => {
     });
     return;
   }
+  if (!coupon.productCategoryRelationList) {
+    coupon.productCategoryRelationList = [];
+  }
   coupon.productCategoryRelationList.push(getProductCateByIds(selectProductCate.value));
   selectProductCate.value = [];
 };
@@ -334,12 +355,11 @@ const handleDeleteProductCateRelation = (index) => {
 };
 
 const getProductById = (id) => {
-
   return selectProductOptions.value.find(item => item.productId === id) || null;
 };
 
-const getProductCateList = () => {
-  productStore.BuildProductCategoryData();
+const getProductCateList = async () => {
+  await productStore.BuildProductCategoryData();
   productCateOptions.value = productStore.ProductCategoryOptions;
 };
 

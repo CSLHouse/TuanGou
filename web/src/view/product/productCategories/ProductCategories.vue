@@ -178,6 +178,7 @@
   import { number } from 'echarts'
   import type { UploadProps, UploadFile, UploadInstance  } from 'element-plus'
   import { useUserStore } from '@/pinia/modules/user'
+import useStore from 'element-plus/es/components/table/src/store'
   const userStore = useUserStore()
   const productStore = ProductStore()
 
@@ -284,6 +285,7 @@
     }
 
     if (res.code === 0) {
+        await productStore.BuildProductCategoryData(true)
         closeDialog()
         getTableData()
     }

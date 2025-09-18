@@ -25,16 +25,16 @@ export function getCoupon(params) {
 
 export function updateCoupon(data) {
   return service({
-    url:'/coupon/update/',
-    method:'post',
+    url:'/coupon/update',
+    method:'put',
     data:data
   })
 }
 
 export function deleteCoupon(params) {
   return service({
-    url:'/coupon/delete/',
-    method:'post',
+    url:'/coupon/delete',
+    method:'delete',
     params:params
 
   })
