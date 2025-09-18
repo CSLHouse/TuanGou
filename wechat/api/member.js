@@ -40,7 +40,7 @@ export function getWXPhoneNumber(data) {
 	})
 }
 
-export function UpdateWxUserInfo(data) {
+export function CreateWxUserInfo(data) {
 	return request({
 		method: 'POST',
 		url: '/base/wxUserInfo',
@@ -89,7 +89,7 @@ export function GetCertificateList(params) {
 export function WXResetNickName(data) {
 	return request({
 		method: 'POST',
-		url: '/user/resetNickName',
+		url: '/base/resetNickName',
 		header: {
 			'content-type': 'application/json'
 		},

@@ -51,6 +51,7 @@
 		onLoad(options) {
 			this.orderId = options.orderId;
 			// this.payment = options.payment;
+
 			fetchOrderDetail({
 				id: this.orderId,
 			}).then(response => {

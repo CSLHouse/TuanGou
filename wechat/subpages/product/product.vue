@@ -419,7 +419,10 @@
 			},
 			//优惠券弹窗开关
 			toggleCoupon(type) {
-				fetchProductCouponList(this.product.id).then(response => {
+				let param = {
+					id: this.product.id
+				}
+				fetchProductCouponList(param).then(response => {
 					this.couponList = response.data;
 					if (this.couponList == null || this.couponList.length == 0) {
 						this.$api.msg("暂无可领优惠券")
@@ -461,8 +464,16 @@
 			//领取优惠券
 			addCoupon(coupon) {
 				this.toggleCoupon();
-				addMemberCoupon(coupon.id).then(response => {
-					this.$api.msg('领取优惠券成功！')
+				let params = {
+					id: coupon.id
+				}
+				addMemberCoupon(params).then(response => {
+					if (response.code == 0) {
+						this.$api.msg('领取优惠券成功！')
+					} else {
+						this.$api.msg(response.msg)
+					}
+
 				});
 			},
 			//收藏
@@ -603,7 +614,7 @@
 							let valueList = data.productAttributeValueList;
 							let filterValueList = valueList.filter(value => value.productAttributeId == item.id);
 							if (filterValueList.length > 0) {
-								let inputList = filterValueList[0].inputList.split(',');
+								let inputList = filterValueList[0].value.split(',');
 								for (let j = 0; j < inputList.length; j++) {
 									this.specChildList.push({
 										pid: item.id,

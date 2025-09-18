@@ -85,9 +85,20 @@
 				}).catch(errors => {
 					console.error("[App:getToken]Not Found openId:", _this.$store.state.openId)
 				});
-			}
+			},
+			// onGetLocation() {
+			// 	uni.getLocation({
+			// 		success: (res) => {
+			// 			console.log("--success--res----", res)
+			// 		},
+			// 		fail: (res) => {
+			// 			console.log("----fail---res---", res)
+			// 		}
+			// 	})
+			// },
 		},
 		onLaunch: function() {
+			// this.onGetLocation()
 			this.checkUpdate()
 			this.initWXLogin()
 		},

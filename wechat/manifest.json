@@ -62,7 +62,11 @@
 		"setting": {
 			"urlCheck": true
 		},
-		"permission": {},
+		"permission": {
+			"scope.userLocation": {
+				"desc": "用于获取当前所在城市信息"
+			}
+		},
 		"optimization": {
 			"subPackages": true //是否启用分包优化
 		},

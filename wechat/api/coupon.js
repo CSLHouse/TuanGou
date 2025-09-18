@@ -3,15 +3,16 @@ import request from '@/utils/requestUtil'
 export function fetchProductCouponList(params) {
 	return request({
 		method: 'GET',
-		url: `coupon/listByProduct`,
+		url: `/coupon/listByProduct`,
 		params: params
 	})
 }
 
-export function addMemberCoupon(couponId) {
+export function addMemberCoupon(params) {
 	return request({
 		method: 'POST',
-		url: `/member/coupon/add/${couponId}`,
+		url: `/coupon/add`,
+		params: params
 	})
 }
 

@@ -2,17 +2,19 @@
 	<view class="content">
 		<view class="row b-b">
 			<text class="tit">姓名</text>
-			<input class="input" type="text" v-model="addressData.name" placeholder="收货人姓名" placeholder-class="placeholder" />
+			<input class="input" type="text" v-model="addressData.name" placeholder="收货人姓名"
+				placeholder-class="placeholder" />
 		</view>
 		<view class="row b-b">
 			<text class="tit">手机号码</text>
-			<input class="input" type="number" v-model="addressData.phoneNumber" placeholder="收货人手机号码" placeholder-class="placeholder" />
+			<input class="input" type="number" v-model="addressData.telephone" placeholder="收货人手机号码"
+				placeholder-class="placeholder" />
 		</view>
 		<!-- <view class="row b-b">
 			<text class="tit">邮政编码</text>
 			<input class="input" type="number" v-model="addressData.postCode" placeholder="收货人邮政编码" placeholder-class="placeholder" />
 		</view> -->
-	<!-- 	<view class="row b-b">
+		<!-- 	<view class="row b-b">
 			<text class="tit">所在区域</text>
 			<text @click="chooseLocation" class="input">
 				{{addressData.province}} {{addressData.city}} {{addressData.region}}
@@ -21,11 +23,13 @@
 		</view> -->
 		<view class="row b-b">
 			<text class="tit">所在区域</text>
-			<input class="input" type="text" v-model="addressData.prefixAddress" placeholder="所在区域" placeholder-class="placeholder" />
+			<input class="input" type="text" v-model="addressData.prefixAddress" placeholder="所在区域"
+				placeholder-class="placeholder" />
 		</view>
 		<view class="row b-b">
 			<text class="tit">详细地址</text>
-			<input class="input" type="text" v-model="addressData.detailAddress" placeholder="详细地址" placeholder-class="placeholder" />
+			<input class="input" type="text" v-model="addressData.detailAddress" placeholder="详细地址"
+				placeholder-class="placeholder" />
 		</view>
 
 		<view class="row default-row">
@@ -47,7 +51,7 @@
 			return {
 				addressData: {
 					name: '',
-					phoneNumber: '',
+					telephone: '',
 					postCode: '',
 					detailAddress: '',
 					default: false,
@@ -62,9 +66,10 @@
 			let title = '新增收货地址';
 			if (option.type === 'edit') {
 				title = '编辑收货地址'
-				fetchAddressDetail(option.id).then(response=>{
+				fetchAddressDetail(option.id).then(response => {
 					this.addressData = response.data;
-					this.addressData.prefixAddress = this.addressData.province+this.addressData.city+this.addressData.region;
+					this.addressData.prefixAddress = this.addressData.province + this.addressData.city + this
+						.addressData.region;
 				});
 			}
 			this.manageType = option.type;
@@ -107,7 +112,7 @@
 					this.$api.msg('请填写收货人姓名');
 					return;
 				}
-				if (!/(^1[3|4|5|7|8][0-9]{9}$)/.test(data.phoneNumber)) {
+				if (!/(^1[3|4|5|7|8][0-9]{9}$)/.test(data.telephone)) {
 					this.$api.msg('请输入正确的手机号码');
 					return;
 				}
@@ -124,8 +129,8 @@
 					this.$api.msg('请填写详细地址信息');
 					return;
 				}
-				if(this.manageType=='edit'){
-					updateAddress(this.addressData).then(response=>{
+				if (this.manageType == 'edit') {
+					updateAddress(this.addressData).then(response => {
 						//this.$api.prePage()获取上一页实例，可直接调用上页所有数据和方法，在App.vue定义
 						this.$api.prePage().refreshList(data, this.manageType);
 						this.$api.msg("地址修改成功！");
@@ -133,8 +138,8 @@
 							uni.navigateBack()
 						}, 800)
 					});
-				}else{
-					addAddress(this.addressData).then(response=>{
+				} else {
+					addAddress(this.addressData).then(response => {
 						//this.$api.prePage()获取上一页实例，可直接调用上页所有数据和方法，在App.vue定义
 						this.$api.prePage().refreshList(data, this.manageType);
 						this.$api.msg("地址添加成功！");

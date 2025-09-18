@@ -55,8 +55,11 @@
 					券
 				</view>
 				<text class="cell-tit clamp">优惠券</text>
-				<text class="cell-tip active">
+				<text class="cell-tip active" v-if="currCoupon==null">
 					选择优惠券
+				</text>
+				<text class="cell-tip active" v-else>
+					{{ currCoupon.name }} - ￥{{currCoupon.amount}}
 				</text>
 				<text class="cell-more wanjia wanjia-gengduo-d"></text>
 			</view>
@@ -81,7 +84,7 @@
 			</view>
 			<view class="yt-list-cell b-b">
 				<text class="cell-tit clamp">活动优惠</text>
-				<text class="cell-tip red">-￥{{calcAmount.promotionAmount}}</text>
+				<text class="cell-tip red">-c{{calcAmount.promotionAmount}}</text>
 			</view>
 			<view class="yt-list-cell b-b">
 				<text class="cell-tit clamp">优惠券</text>
@@ -216,9 +219,9 @@
 					this.currentAddress = this.getDefaultAddress();
 					this.cartPromotionItemList = response.data.cartPromotionItemList;
 					this.couponList = [];
-					// for (let item of response.data.couponHistoryDetailList) {
-					// 	this.couponList.push(item.coupon);
-					// }
+					for (let item of response.data.couponHistoryDetailList) {
+						this.couponList.push(item.coupon);
+					}
 					this.calcAmount = response.data.calcAmount;
 					// this.integrationConsumeSetting = response.data.integrationConsumeSetting;
 					// this.memberIntegration = response.data.memberIntegration;

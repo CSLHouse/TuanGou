@@ -237,6 +237,11 @@
 		"navigationBarBackgroundColor": "#FFFFFF",
 		"backgroundColor": "#f8f8f8"
 	},
+	"permission": {
+		"scope.userLocation": {
+			"desc": "用于获取当前所在城市信息"
+		}
+	},
 	"tabBar": {
 		"color": "#C0C4CC",
 		"selectedColor": "#fa436a",

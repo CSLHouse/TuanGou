@@ -1,11 +1,14 @@
 import Request from '@/js_sdk/luch-request/request.js'
 import store from '../store'
-import { wxRefreshLogin } from '@/api/member.js';
+import {
+	wxRefreshLogin
+} from '@/api/member.js';
 import common from '@/utils/common.js'
 
 const http = new Request()
 
-http.setConfig((config) => { /* 设置全局配置 */
+http.setConfig((config) => {
+	/* 设置全局配置 */
 	config.baseUrl = common.baseUrl /* 根域名不同 */
 	config.header = {
 		"Access-Control-Allow-Origin": "*",
@@ -24,16 +27,17 @@ http.validateStatus = (statusCode) => {
 	return statusCode === 200
 }
 
-http.interceptor.request((config, cancel) => { /* 请求之前拦截器 */
+http.interceptor.request((config, cancel) => {
+	/* 请求之前拦截器 */
 	// const token = uni.getStorageSync('Token');
 	const token = store.state.token
-	if(token){
+	if (token) {
 		config.header = {
-			'x-token':token,
+			'x-token': token,
 			'x-user_id': store.state.userInfo.id,
 			...config.header
 		}
-	}else{
+	} else {
 		config.header = {
 			...config.header
 		}
@@ -46,7 +50,8 @@ http.interceptor.request((config, cancel) => { /* 请求之前拦截器 */
 	return config
 })
 
-http.interceptor.response((response) => { /* 请求之后拦截器 */
+http.interceptor.response((response) => {
+	/* 请求之后拦截器 */
 	// console.log("---response.headers:", response.header)
 	if (response.headers && response.header['new-token']) {
 		uni.setStorageSync('Token', response.header['new-token'])
@@ -54,7 +59,9 @@ http.interceptor.response((response) => { /* 请求之后拦截器 */
 	const res = response.data;
 	if (res.code !== 0) {
 		if (res.code === 7 && res.data.reload) {
-			wxRefreshLogin({openId: store.state.openId}).then(res => {
+			wxRefreshLogin({
+				openId: store.state.openId
+			}).then(res => {
 				if (res.code == 0) {
 					// console.log("---[interceptor]---wxRefreshLogin--s--------", res)
 					const userinfo = res.data
@@ -70,16 +77,16 @@ http.interceptor.response((response) => { /* 请求之后拦截器 */
 		}
 		//提示错误信息
 		uni.showToast({
-			title:res.message,
-			duration:1500
+			title: res.message,
+			duration: 1500
 		})
 		//401未登录处理
 		if (res.code === 401 || (res.code === 7 && res.data.reload)) {
 			uni.showModal({
 				title: '提示',
 				content: '你已被登出，可以取消继续留在该页面，或者重新登录',
-				confirmText:'重新登录',
-				cancelText:'取消',
+				confirmText: '重新登录',
+				cancelText: '取消',
 				success: function(res) {
 					if (res.confirm) {
 						store.state.hasLogin = false
@@ -90,13 +97,17 @@ http.interceptor.response((response) => { /* 请求之后拦截器 */
 						})
 					} else if (res.cancel) {
 						uni.showModal({
-							title:'提示',
-							content:'取消',
-							showCancel:false
+							title: '提示',
+							content: '取消',
+							showCancel: false
 						})
 					}
 				}
 			});
+		}
+
+		if (res.code == 5) {
+			return response.data;
 		}
 		return Promise.reject(response);
 	} else {
@@ -106,13 +117,13 @@ http.interceptor.response((response) => { /* 请求之后拦截器 */
 	//提示错误信息
 	// console.log('response error', response);
 	uni.showToast({
-		title:response.errMsg,
-		duration:1500
+		title: response.errMsg,
+		duration: 1500
 	})
 	return Promise.reject(response);
 })
 
-export function request (options = {}) {
+export function request(options = {}) {
 	return http.request(options);
 }
 
