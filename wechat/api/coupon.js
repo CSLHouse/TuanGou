@@ -19,7 +19,7 @@ export function addMemberCoupon(params) {
 export function fetchMemberCouponList(useStatus) {
 	return request({
 		method: 'GET',
-		url: '/member/coupon/list',
+		url: '/coupon/listWithState',
 		params: {
 			useStatus: useStatus
 		}

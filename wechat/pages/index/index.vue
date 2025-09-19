@@ -47,7 +47,7 @@
 		</view> -->
 
 		<!-- 品牌制造商直供 -->
-		<!-- <view class="f-header m-t" @click="navToRecommendBrandPage()">
+		<view class="f-header m-t" @click="navToRecommendBrandPage()">
 			<image src="/static/icon_home_brand.png"></image>
 			<view class="tit-box">
 				<text class="tit">品牌制造商直供</text>
@@ -63,7 +63,7 @@
 				<text class="title clamp">{{item.name}}</text>
 				<text class="title2">商品数量：{{item.productCount}}</text>
 			</view>
-		</view> -->
+		</view>
 
 		<!-- 秒杀专区 -->
 		<view class="f-header m-t" v-if="homeFlashPromotion!==null">
@@ -292,9 +292,8 @@
 		},
 		onLoad(options) {
 			if (options.refCode && options.refCode.length > 0) {
-				recordShareCount({
-					openId: options.refCode
-				})
+				console.log("--------refCode------", options.refCode)
+				this.$store.state.formOpenId = options.refCode
 			}
 			this.loadData(options);
 		},

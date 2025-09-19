@@ -15,6 +15,7 @@ const store = new Vuex.Store({
 		openId: '',
 		token: "",
 		hadNickName: false,
+		formOpenId: '',
 	},
 	mutations: {
 		refreshLoginSession() {
@@ -71,10 +72,22 @@ const store = new Vuex.Store({
 			uni.removeStorage({
 				key: 'Token'
 			})
-		}
+		},
+		// setFormOpenId(state, provider) {
+		// 	state.formOpenId = provider
+		// }
+	},
+	getters: {
+		// fetchFormOpenId(state) {
+		// 	return state.formOpenId
+		// }
 	},
 	actions: {
-
+		// updateFormOpoenId({
+		// 	commit
+		// }, openId) {
+		// 	commit('setFormOpenId', openId);
+		// },
 	}
 })
 

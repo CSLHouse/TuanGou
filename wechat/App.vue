@@ -16,9 +16,12 @@
 	} from '@/utils/common.js'
 	export default {
 		methods: {
-			...mapMutations(['login', 'makePhone', 'refreshLoginSession']),
+			...mapMutations(['login', 'refreshLoginSession']),
 			checkUpdate() {
 				const updateManager = uni.getUpdateManager(); // 获取更新管理器对象
+				if (!updateManager || typeof updateManager.onCheckForUpdate !== 'function') {
+					return
+				}
 				updateManager.onCheckForUpdate(function(res) {
 					if (res.hasUpdate) {
 						updateManager.onUpdateReady(function() {
@@ -51,7 +54,7 @@
 				} else {
 					_this.refreshLoginSession()
 				}
-				console.log("---APP--openId--", _this.$store.state.openId)
+				console.log("---APP--openId--  ", _this.$store.state.openId)
 				const token = wx.getStorageSync("Token")
 				const tokenTime = wx.getStorageSync("TokenTime")
 				const userInfo = wx.getStorageSync("UserInfo")

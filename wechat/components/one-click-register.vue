@@ -123,7 +123,6 @@
 			},
 			// 获取用户头像、昵称、省份信息
 			onChooseAvatar(e) {
-				console.log("---onChooseAvatar---", e)
 
 				this.defaultAvatarUrl = e.detail.avatarUrl
 				this.hasGotUserInfo = true

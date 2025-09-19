@@ -13,9 +13,9 @@ export default {
 	onShareAppMessage(res) { //发送给朋友
 		let that = this;
 		let imageUrl = that.shareUrl || '';
-		// console.log("----------scope:", this.$scope)
+		console.log("----------scope:", this.$scope)
 		if (res.from === 'button') {
-		//这块需要传参，不然链接地址进去获取不到数据
+			//这块需要传参，不然链接地址进去获取不到数据
 			let path = `/` + that.$scope.route + `?id=` + that.$scope.options.id;
 			return {
 				title: '好物分享~',
@@ -26,7 +26,7 @@ export default {
 		if (res.from === 'menu') {
 			const openId = wx.getStorageSync("OpenId")
 			return {
-				title: '猪迪克',
+				title: '众推优选',
 				path: '/pages/index/index?refCode=' + openId,
 				// imageUrl: 'https://cdn.uviewui.com/uview/swiper/1.jpg'
 			};
@@ -36,7 +36,7 @@ export default {
 	onShareTimeline() {
 		const openId = wx.getStorageSync("OpenId")
 		return {
-			title: '猪迪克',
+			title: '众推优选',
 			path: '/pages/index/index?refCode=' + openId,
 			// imageUrl: 'https://cdn.uviewui.com/uview/swiper/1.jpg'
 		};
@@ -45,4 +45,3 @@ export default {
 
 	}
 }
-

@@ -41,11 +41,3 @@ export function fetchHotProductList(params) {
 		params: params
 	})
 }
-
-export function recordShareCount(data) {
-	return request({
-		method: 'POST',
-		url: '/base/recordShare',
-		data: data
-	})
-}

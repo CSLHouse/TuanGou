@@ -21,17 +21,17 @@
 
 			<view class="tj-sction">
 				<view class="tj-item">
+					<text class="num">{{userInfo.growth || '暂无'}}</text>
+					<text>分红</text>
+				</view>
+				<view class="tj-item">
 					<text class="num">{{userInfo.integration || '暂无'}}</text>
 					<text>积分</text>
 				</view>
-				<view class="tj-item">
-					<text class="num">{{userInfo.growth || '暂无'}}</text>
-					<text>成长值</text>
-				</view>
-				<!-- <view class="tj-item" @click="navTo('/subpages/coupon/couponList')">
+				<view class="tj-item" @click="navTo('/subpages/coupon/couponList')">
 					<text class="num">{{couponCount || '暂无'}}</text>
 					<text>优惠券</text>
-				</view> -->
+				</view>
 			</view>
 			<view class="order-section">
 				<view class="order-item" @click="navTo('/subpages/order/order?state=0')" hover-class="common-hover"
@@ -57,9 +57,10 @@
 			</view>
 			<!-- 浏览历史 -->
 			<view class="history-section icon">
-				<list-cell icon="icon-dizhi" iconColor="#5fcda2" title="会员管理"
-					@eventClick="navTo('/subpages/member/member')"></list-cell>
-				<!-- <list-cell icon="icon-dizhi" iconColor="#5fcda2" title="地址管理" @eventClick="navTo('/subpages/address/address')"></list-cell> -->
+				<list-cell icon="icon-shoucang" iconColor="#5fcda2" title="团队管理"
+					@eventClick="navTo('/subpages/group/group')"></list-cell>
+				<list-cell icon="icon-dizhi" iconColor="#5fcda2" title="地址管理"
+					@eventClick="navTo('/subpages/address/address')"></list-cell>
 				<!-- <list-cell icon="icon-lishijilu" iconColor="#e07472" title="我的足迹" @eventClick="navTo('/subpages/user/readHistory')"></list-cell>
 				<list-cell icon="icon-shoucang" iconColor="#5fcda2" title="我的关注" @eventClick="navTo('/subpages/user/brandAttention')"></list-cell>
 				<list-cell icon="icon-shoucang_xuanzhongzhuangtai" iconColor="#54b4ef" title="我的收藏" @eventClick="navTo('/subpages/user/productCollection')"></list-cell>
@@ -67,28 +68,6 @@
 				<list-cell icon="icon-shezhi1" iconColor="#e07472" title="设置" border=""
 					@eventClick="navTo('/subpages/set/set')"></list-cell>
 			</view>
-		</view>
-		<view v-if='!hasLogin && !isCloseModel'>
-			<div class="modal-mask" @click="closePop">
-			</div>
-			<div class="modal-dialog">
-				<div class="modal-content">
-					<image class="img" src="/static/pop.jpg"></image>
-					<div class="content-text">
-						<p class="key-bold-tip">注册会员</p>
-						<p class="key-bold">注册成为会员享受更多优惠</p>
-						<p class="little-tip">我们的生活圈：</p>
-						<p class="little-content">
-							注册成为会员，一店消费，多家优惠，欢迎体验
-						</p>
-					</div>
-				</div>
-				<div class="modal-footer">
-					<button class='btn' open-type='getPhoneNumber' @getphonenumber="decryptPhoneNumber">
-						一键注册
-					</button>
-				</div>
-			</div>
 		</view>
 
 		<one-click-register></one-click-register>
@@ -132,7 +111,17 @@
 			}
 		},
 		onLoad() {},
-		onShow() {},
+		onShow() {
+			if (this.hasLogin) {
+				fetchMemberCouponList(0).then(response => {
+					if (response.data != null && response.data.list.length > 0) {
+						this.couponCount = response.data.list.length;
+					}
+				});
+			} else {
+				this.couponCount = null;
+			}
+		},
 		// #ifndef MP
 		onNavigationBarButtonTap(e) {
 			const index = e.index;
@@ -524,157 +513,6 @@
 				margin-right: 20upx;
 				border-radius: 10upx;
 			}
-		}
-	}
-
-	.modal-mask {
-		width: 100%;
-		height: 100%;
-		position: fixed;
-		top: 0;
-		left: 0;
-		background: #000;
-		opacity: 0.5;
-		overflow: hidden;
-		z-index: 9000;
-		color: #fff;
-	}
-
-	.modal-dialog {
-		box-sizing: border-box;
-		width: 560rpx;
-		overflow: hidden;
-		position: fixed;
-		top: 40%;
-		left: 0;
-		z-index: 9999;
-		background: #fff;
-		margin: -150rpx 95rpx;
-		border-radius: 16rpx;
-	}
-
-	.modal-content {
-		box-sizing: border-box;
-		display: flex;
-		padding: 0rpx 53rpx 50rpx 53rpx;
-		font-size: 32rpx;
-		align-items: center;
-		justify-content: center;
-		flex-direction: column;
-	}
-
-	.content-tip {
-		text-align: center;
-		font-size: 36rpx;
-		color: #333333;
-	}
-
-	.content-text {
-		/* height:230px; */
-		padding: 10px 0px 10px 0px;
-		font-size: 14px;
-	}
-
-	.modal-footer {
-		box-sizing: border-box;
-		display: flex;
-		flex-direction: row;
-		border-top: 1px solid #e5e5e5;
-		font-size: 16px;
-		font-weight: bold;
-		/* height: 45px; */
-		line-height: 45px;
-		text-align: center;
-		background: #feb600;
-	}
-
-	.btn {
-		width: 100%;
-		height: 100%;
-		background: #feb600;
-		color: #FFFFFF;
-		font-weight: bold;
-	}
-
-	.img {
-		width: 560rpx;
-		height: 140rpx;
-	}
-
-	.little-tip {
-		padding-top: 15px;
-		padding-bottom: 3px;
-		font-size: 14px;
-		font-weight: bold;
-		color: #feb600;
-	}
-
-	.little-content {
-		padding-top: 5px;
-		font-size: 13px;
-		color: #606060;
-	}
-
-	.key-bold-tip {
-		padding-top: 5px;
-		font-size: 15px;
-		font-weight: bold;
-		color: #feb600;
-	}
-
-	.key-bold {
-		padding-top: 5px;
-		font-size: 14px;
-		/* font-weight:bold; */
-	}
-
-	.info-bold-tip {
-		padding-top: 5px;
-		font-size: 15px;
-		font-weight: bold;
-		color: #feb600;
-		text-align: center;
-	}
-
-	.avatarUrl {
-		background: #fff;
-		padding: 20rpx 20rpx 10rpx;
-		/* display: flex; */
-		align-items: center;
-		justify-content: center;
-		border-bottom: 1px solid #f5f5f5;
-		height: 100rpx;
-
-		button {
-			background: rgba(0, 0, 0, 0);
-			float: right;
-
-			.avatar-img {
-				height: 60rpx;
-				width: 60rpx;
-				border-radius: 50%;
-			}
-		}
-
-		button::after {
-			border: none;
-		}
-
-		.you-btn {
-			margin-bottom: 10rpx;
-			float: right;
-		}
-	}
-
-	.nickname {
-		background: #fff;
-		padding: 20rpx 20rpx 10rpx;
-		align-items: center;
-		justify-content: center;
-		height: 100rpx;
-
-		.weui-input {
-			float: right;
 		}
 	}
 </style>
