@@ -7,3 +7,7 @@ type SearchInfoCoupon struct {
 	OrderSn   string `json:"orderSn" form:"orderSn"`
 	CouponId  string `json:"couponId" form:"couponId"`
 }
+
+type SearchByState struct {
+	UseStatus int `json:"useStatus" form:"useStatus"`
+}

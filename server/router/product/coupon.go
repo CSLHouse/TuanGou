@@ -21,6 +21,7 @@ func (s *CouponRouter) InitCouponRouter(Router *gin.RouterGroup, RouterPub *gin.
 	{
 
 		couponPublicRouterWithoutRecord.GET("list", couponApi.GetCouponList)
+		couponPublicRouterWithoutRecord.GET("listWithState", couponApi.GetCouponListWithState)
 		couponPublicRouterWithoutRecord.GET("details", couponApi.GetCouponById)
 		couponPublicRouterWithoutRecord.GET("couponHistory", couponApi.GetCouponHistoryList)
 		couponPublicRouterWithoutRecord.GET("listByProduct", couponApi.GetCouponListByProduct)

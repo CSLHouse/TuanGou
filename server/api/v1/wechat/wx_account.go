@@ -96,7 +96,7 @@ func (b *WXAccountApi) CreateWXUserInfo(c *gin.Context) {
 	wxUser.Telephone = userInfo.Telephone
 	wxUser.AuthorityId = 9528
 
-	err = accountService.CreateWXAccount(&wxUser)
+	wxUser, err = accountService.CreateWXAccount(&wxUser)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return

@@ -49,3 +49,10 @@ type MemberReceiveAddress struct {
 func (MemberReceiveAddress) TableName() string {
 	return "ums_member_receive_address"
 }
+
+type InviteCode struct {
+	UserId int    `json:"userId" `
+	Code   string `json:"code" form:"code" gorm:"not null;comment:邀请码;size:6"`
+}
+
+func (InviteCode) TableName() string { return "ums_invite_code" }

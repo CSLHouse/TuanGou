@@ -268,6 +268,7 @@ func (i *initCasbin) InitializeData(ctx context.Context) (context.Context, error
 		{Ptype: "p", V0: "888", V1: "/coupon/couponHistory", V2: "GET"},
 		{Ptype: "p", V0: "888", V1: "/coupon/listByProduct", V2: "GET"},
 		{Ptype: "p", V0: "888", V1: "/coupon/add", V2: "POST"},
+		{Ptype: "p", V0: "888", V1: "/coupon/listWithState", V2: "GET"},
 
 		{Ptype: "p", V0: "8881", V1: "/user/admin_register", V2: "POST"},
 		{Ptype: "p", V0: "8881", V1: "/api/createApi", V2: "POST"},
@@ -357,6 +358,7 @@ func (i *initCasbin) InitializeData(ctx context.Context) (context.Context, error
 		{Ptype: "p", V0: "8881", V1: "/coupon/couponHistory", V2: "GET"},
 		{Ptype: "p", V0: "8881", V1: "/coupon/listByProduct", V2: "GET"},
 		{Ptype: "p", V0: "8881", V1: "/coupon/add", V2: "POST"},
+		{Ptype: "p", V0: "8881", V1: "/coupon/listWithState", V2: "GET"},
 
 		{Ptype: "p", V0: "8881", V1: "/flash/create", V2: "POST"},
 		{Ptype: "p", V0: "8881", V1: "/flash/delete", V2: "DELETE"},
@@ -478,6 +480,7 @@ func (i *initCasbin) InitializeData(ctx context.Context) (context.Context, error
 		{Ptype: "p", V0: "9528", V1: "/base/checkPhone", V2: "GET"},
 		{Ptype: "p", V0: "9528", V1: "/base/recordShare", V2: "POST"},
 		{Ptype: "p", V0: "9528", V1: "/coupon/add", V2: "POST"},
+		{Ptype: "p", V0: "9528", V1: "/coupon/listWithState", V2: "GET"},
 	}
 	if err := db.Create(&entities).Error; err != nil {
 		return ctx, errors.Wrap(err, "Casbin 表 ("+i.InitializerName()+") 数据初始化失败!")

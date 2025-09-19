@@ -182,6 +182,12 @@ func (exa *CouponService) GetCouponHistoryList(info couponRes.SearchInfoCoupon) 
 	return list, total, err
 }
 
+func (exa *CouponService) GetCouponHistoryListByState(userId int, useStatus int) (couponList []product.CouponHistory, err error) {
+	db := global.GVA_DB.Model(&product.CouponHistory{})
+	err = db.Debug().Where("member_id = ? and use_status = ?", userId, useStatus).Find(&couponList).Error
+	return couponList, err
+}
+
 func (exa *CouponService) CreateCouponHistory(e *product.CouponHistory) (err error) {
 	err = global.GVA_DB.Create(e).Error
 	return err

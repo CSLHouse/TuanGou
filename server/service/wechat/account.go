@@ -8,14 +8,15 @@ import (
 
 type AccountService struct{}
 
-func (exa *AccountService) CreateWXAccount(e *wechat.WXUser) (err error) {
+func (exa *AccountService) CreateWXAccount(e *wechat.WXUser) (user wechat.WXUser, err error) {
 	db := global.GVA_DB.Model(&wechat.WXUser{})
 	var wxUser wechat.WXUser
 	result := db.Where("open_id = ?", e.OpenId).First(&wxUser)
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
 			err = global.GVA_DB.Create(&e).Error
-			return err
+			wxUser = *e
+			return wxUser, err
 		}
 		err = result.Error
 	} else {
@@ -23,10 +24,15 @@ func (exa *AccountService) CreateWXAccount(e *wechat.WXUser) (err error) {
 			"session_key": e.SessionKey, "avatar_url": e.AvatarUrl,
 			"nick_name": e.NickName, "city": e.City, "telephone": e.Telephone,
 		}).Error
-		return err
+		wxUser.SessionKey = e.SessionKey
+		wxUser.AvatarUrl = e.AvatarUrl
+		wxUser.NickName = e.NickName
+		wxUser.City = e.City
+		wxUser.Telephone = e.Telephone
+		return wxUser, err
 	}
 
-	return err
+	return wxUser, err
 }
 
 func (exa *AccountService) UpdateWXAccountInfo(e wechat.WXUser) (err error) {

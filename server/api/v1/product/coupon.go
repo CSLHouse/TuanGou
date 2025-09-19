@@ -42,6 +42,25 @@ func (e *CouponApi) GetCouponList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
+func (e *CouponApi) GetCouponListWithState(c *gin.Context) {
+	var searchInfo couponRes.SearchByState
+	err := c.ShouldBindQuery(&searchInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	userId := utils.GetUserID(c)
+	list, err := couponService.GetCouponHistoryListByState(userId, searchInfo.UseStatus)
+	if err != nil {
+		global.GVA_LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败"+err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(response.AllResult{
+		List: list,
+	}, "获取成功", c)
+}
+
 func (e *CouponApi) GetCouponById(c *gin.Context) {
 	var reqId request.GetById
 	err := c.ShouldBindQuery(&reqId)
