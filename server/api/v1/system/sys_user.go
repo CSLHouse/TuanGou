@@ -80,7 +80,6 @@ func (b *BaseApi) TokenNext(c *gin.Context, user system.SysUser) {
 	claims := j.CreateClaims(systemReq.BaseClaims{
 		UUID:        user.UUID,
 		ID:          user.ID,
-		NickName:    user.NickName,
 		UserName:    user.UserName,
 		AuthorityId: user.AuthorityId,
 		Telephone:   user.Phone,

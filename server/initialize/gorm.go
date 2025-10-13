@@ -1,6 +1,7 @@
 package initialize
 
 import (
+	"cooller/server/model/wechat"
 	"os"
 
 	"cooller/server/global"
@@ -55,6 +56,11 @@ func RegisterTables() {
 		example.ExaCustomer{},
 		example.ExaFileChunk{},
 		example.ExaFileUploadAndDownload{},
+
+		wechat.TeamRecord{},
+		wechat.TeamSequenceNum{},
+		wechat.TeamConsumeRecord{},
+		wechat.TeamSettlement{},
 	)
 	if err != nil {
 		global.GVA_LOG.Error("register system table failed", zap.Error(err))

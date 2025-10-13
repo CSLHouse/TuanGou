@@ -254,9 +254,9 @@ func (e *CouponApi) generateCouponCode(memberId int64) string {
 	timeMillisStr := fmt.Sprintf("%d", currentTimeMillis)
 	sb += timeMillisStr[len(timeMillisStr)-8:]
 
-	rand.New(rand.NewSource(time.Now().UnixNano()))
+	random := rand.New(rand.NewSource(time.Now().UnixNano()))
 	for i := 0; i < 4; i++ {
-		sb += fmt.Sprintf("%d", rand.Intn(10))
+		sb += fmt.Sprintf("%d", random.Intn(10))
 	}
 
 	memberIdStr := fmt.Sprintf("%d", memberId)

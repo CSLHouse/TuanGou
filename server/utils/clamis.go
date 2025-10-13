@@ -87,20 +87,6 @@ func GetUserName(c *gin.Context) string {
 	}
 }
 
-// GetNickName 从Gin的Context中获取从jwt解析出来的用户昵称
-func GetNickName(c *gin.Context) string {
-	if claims, exists := c.Get("claims"); !exists {
-		if cl, err := GetClaims(c); err != nil {
-			return ""
-		} else {
-			return cl.UserName
-		}
-	} else {
-		waitUse := claims.(*systemReq.CustomClaims)
-		return waitUse.NickName
-	}
-}
-
 // GetTelephone 从Gin的Context中获取从jwt解析出来的用户手机号
 func GetTelephone(c *gin.Context) string {
 	if claims, exists := c.Get("claims"); !exists {
@@ -112,5 +98,19 @@ func GetTelephone(c *gin.Context) string {
 	} else {
 		waitUse := claims.(*systemReq.CustomClaims)
 		return waitUse.Telephone
+	}
+}
+
+// GetCaptainId 从Gin的Context中获取从jwt解析出来的用户队长Id
+func GetCaptainId(c *gin.Context) int {
+	if claims, exists := c.Get("claims"); !exists {
+		if cl, err := GetClaims(c); err != nil {
+			return 0
+		} else {
+			return cl.CaptainId
+		}
+	} else {
+		waitUse := claims.(*systemReq.CustomClaims)
+		return waitUse.CaptainId
 	}
 }

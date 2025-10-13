@@ -22,11 +22,11 @@ func (exa *AccountService) CreateWXAccount(e *wechat.WXUser) (user wechat.WXUser
 	} else {
 		err = db.Debug().Where("open_id = ?", e.OpenId).Updates(map[string]interface{}{
 			"session_key": e.SessionKey, "avatar_url": e.AvatarUrl,
-			"nick_name": e.NickName, "city": e.City, "telephone": e.Telephone,
+			"user_name": e.UserName, "city": e.City, "telephone": e.Telephone,
 		}).Error
 		wxUser.SessionKey = e.SessionKey
 		wxUser.AvatarUrl = e.AvatarUrl
-		wxUser.NickName = e.NickName
+		wxUser.UserName = e.UserName
 		wxUser.City = e.City
 		wxUser.Telephone = e.Telephone
 		return wxUser, err
@@ -38,13 +38,28 @@ func (exa *AccountService) CreateWXAccount(e *wechat.WXUser) (user wechat.WXUser
 func (exa *AccountService) UpdateWXAccountInfo(e wechat.WXUser) (err error) {
 	db := global.GVA_DB.Model(&wechat.WXUser{})
 
-	err = db.Debug().Where("open_id = ?", e.OpenId).Updates(map[string]interface{}{"nick_name": e.NickName,
+	err = db.Debug().Where("open_id = ?", e.OpenId).Updates(map[string]interface{}{"user_name": e.UserName,
 		"gender": e.Gender, "avatar_url": e.AvatarUrl, "token": e.Token}).Error
+	return err
+}
+
+func (exa *AccountService) UpdateWXAccount(e wechat.WXUser) (err error) {
+	err = global.GVA_DB.Save(e).Error
 	return err
 }
 
 func (exa *AccountService) GetWXAccountByOpenID(openId string) (user wechat.WXUser, err error) {
 	err = global.GVA_DB.Where("open_id = ?", openId).First(&user).Error
+	return user, err
+}
+
+func (exa *AccountService) GetWXAccountByID(userId int) (user wechat.WXUser, err error) {
+	err = global.GVA_DB.Where("id = ?", userId).First(&user).Error
+	return user, err
+}
+
+func (exa *AccountService) GetWXAccountByInviteCode(inviteCode string) (user wechat.WXUser, err error) {
+	err = global.GVA_DB.Where("invite_code = ?", inviteCode).First(&user).Error
 	return user, err
 }
 

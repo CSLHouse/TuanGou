@@ -18,25 +18,25 @@ import (
 type ProductApi struct{}
 
 func (e *ProductApi) CreateProduct(c *gin.Context) {
-	var product product.Product
-	err := c.ShouldBindJSON(&product)
+	var productInfo product.Product
+	err := c.ShouldBindJSON(&productInfo)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
 
-	err = productService.CreateHomeProduct(&product)
+	err = productService.CreateHomeProduct(&productInfo)
 	if err != nil {
 		global.GVA_LOG.Error("创建产品失败!", zap.Error(err))
 		response.FailWithMessage("创建产品失败", c)
 		return
 	}
 	// 新品
-	if product.NewStatus == 1 {
+	if productInfo.NewStatus == 1 {
 		var newProduct wechat.NewProduct
-		newProduct.ProductId = product.ID
-		newProduct.ProductName = product.Name
-		newProduct.RecommendStatus = product.PublishStatus
+		newProduct.ProductId = productInfo.ID
+		newProduct.ProductName = productInfo.Name
+		newProduct.RecommendStatus = productInfo.PublishStatus
 		err = wechatService.CreateNewProduct(&newProduct)
 		if err != nil {
 			global.GVA_LOG.Error("创建新品失败!", zap.Error(err))
@@ -45,12 +45,12 @@ func (e *ProductApi) CreateProduct(c *gin.Context) {
 		}
 	}
 	// 推荐
-	if product.RecommandStatus == 1 {
+	if productInfo.RecommandStatus == 1 {
 		var recommendProduct []wechat.RecommendProduct
 		var recommend wechat.RecommendProduct
-		recommend.ProductId = product.ID
-		recommend.ProductName = product.Name
-		recommend.RecommendStatus = product.PublishStatus
+		recommend.ProductId = productInfo.ID
+		recommend.ProductName = productInfo.Name
+		recommend.RecommendStatus = productInfo.PublishStatus
 		recommendProduct = append(recommendProduct, recommend)
 		err = wechatService.CreateRecommendProduct(&recommendProduct)
 		if err != nil {

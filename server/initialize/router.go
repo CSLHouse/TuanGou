@@ -83,12 +83,13 @@ func Routers() *gin.Engine {
 		//businessRouter.InitOrderRouter(PrivateGroup)                // 订单路由
 		wechatRouter.InitWechatRouter(PrivateGroup, PublicGroup) // 小程序首页路由
 
-		wechatRouter.InitOrderRouter(PrivateGroup) // 订单路由
+		productRouter.InitOrderRouter(PrivateGroup) // 订单路由
 		payRouter.InitPayRouter(PrivateGroup, PublicGroup)
 		wechatRouter.InitFlashRouter(PrivateGroup, PublicGroup)
 		productRouter.InitCouponRouter(PrivateGroup, PublicGroup)  // 优惠券
 		productRouter.InitProductRouter(PrivateGroup, PublicGroup) // 商品
 		businessRouter.InitQrCodeRouter(PrivateGroup, PublicGroup)
+		wechatRouter.InitTeamRouter(PrivateGroup)
 
 	}
 

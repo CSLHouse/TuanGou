@@ -8,6 +8,7 @@ type ApiGroup struct {
 	WXAccountApi
 	FlashApi
 	HomeApi
+	TeamApi
 }
 
 var (
@@ -18,4 +19,5 @@ var (
 	wxAccountServer              = service.ServiceGroupApp.WechatServiceGroup.AccountService
 	jwtService                   = service.ServiceGroupApp.SystemServiceGroup.JwtService
 	couponService                = service.ServiceGroupApp.ProductServiceGroup.CouponService
+	teamService                  = service.ServiceGroupApp.WechatServiceGroup.TeamService
 )

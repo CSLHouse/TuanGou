@@ -87,23 +87,73 @@ func (b *WXAccountApi) CreateWXUserInfo(c *gin.Context) {
 		return
 	}
 	fmt.Println("---userInfo:", userInfo)
-
+	var upperUserId uint16
+	if len(userInfo.InviteCode) > 0 {
+		upperUserInfo, err := accountService.GetWXAccountByInviteCode(userInfo.InviteCode)
+		if err != nil {
+			global.GVA_LOG.Error(err.Error(), zap.Error(err))
+			response.FailWithMessage("请检查邀请码是否错误", c)
+			return
+		}
+		//通过邀请码反推ID, 需保证邀请码生成器的CHARSET和长度一致
+		g := utils.NewGenerator[uint16](utils.CHARSET, 6)
+		upperUserId = g.Decode(userInfo.InviteCode)
+		if upperUserId < 1 || upperUserInfo.ID != int(upperUserId) {
+			global.GVA_LOG.Error("邀请码错误!", zap.Error(err))
+			response.FailWithMessage("邀请码错误", c)
+			return
+		}
+	}
 	var wxUser wechat.WXUser
 	wxUser.OpenId = userInfo.OpenID
-	wxUser.NickName = userInfo.NickName
+	wxUser.UserName = userInfo.NickName
 	wxUser.City = userInfo.City
 	wxUser.AvatarUrl = userInfo.AvatarUrl
 	wxUser.Telephone = userInfo.Telephone
+	wxUser.CaptainId = int(upperUserId)
 	wxUser.AuthorityId = 9528
 
 	wxUser, err = accountService.CreateWXAccount(&wxUser)
 	if err != nil {
+		global.GVA_LOG.Error(err.Error(), zap.Error(err))
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
 	fmt.Println("---wxUser:", wxUser)
+	// 生成邀请码
+	if wxUser.ID > 0 {
+		g := utils.NewGenerator[uint16](utils.CHARSET, 6)
+		// 通过一个现有的非负整数ID生成对应的邀请码
+		curUID := uint16(wxUser.ID)
+		code, err := g.Encode(curUID)
+		if err != nil {
+			global.GVA_LOG.Error("生成邀请码失败!", zap.Error(err))
+			response.FailWithMessage("生成邀请码失败", c)
+			return
+		}
+		wxUser.InviteCode = code
 
-	//response.OkWithDetailed(wxUser, "更新成功", c)
+		// 记录
+		var inviteCodeData wechat.TeamRecord
+		inviteCodeData.UserId = wxUser.ID
+		inviteCodeData.CaptainId = int(upperUserId) // 队长id
+		inviteCodeData.IsActivated = 0
+		inviteCodeData.InviteCode = userInfo.InviteCode
+		err = teamService.CreateInviteCodeRecode(&inviteCodeData)
+		if err != nil {
+			global.GVA_LOG.Error("存储邀请码记录失败!", zap.Error(err))
+			response.FailWithMessage("存储邀请码记录失败", c)
+			return
+		}
+
+		err = accountService.UpdateWXAccount(wxUser)
+		if err != nil {
+			global.GVA_LOG.Error("更新邀请码失败!", zap.Error(err))
+			response.FailWithMessage("更新邀请码失败", c)
+			return
+		}
+	}
+
 	b.WXTokenNext(c, wxUser)
 }
 
@@ -111,12 +161,11 @@ func (b *WXAccountApi) CreateWXUserInfo(c *gin.Context) {
 func (b *WXAccountApi) WXTokenNext(c *gin.Context, customer wechat.WXUser) {
 	j := &utils.JWT{SigningKey: []byte(global.GVA_CONFIG.JWT.SigningKey)} // 唯一签名
 	claims := j.CreateClaims(systemReq.BaseClaims{
-		UUID:        customer.UUID,
 		ID:          customer.ID,
-		NickName:    customer.NickName,
 		UserName:    customer.UserName,
 		AuthorityId: customer.AuthorityId,
 		Telephone:   customer.Telephone,
+		CaptainId:   customer.CaptainId,
 	})
 	token, err := j.CreateToken(claims)
 	if err != nil {
@@ -133,8 +182,8 @@ func (b *WXAccountApi) WXTokenNext(c *gin.Context, customer wechat.WXUser) {
 		return
 	}
 
-	if jwtStr, err := jwtService.GetRedisJWT(customer.UUID.String()); err == redis.Nil {
-		if err := jwtService.SetRedisJWT(token, customer.UUID.String()); err != nil {
+	if jwtStr, err := jwtService.GetRedisJWT(customer.OpenId); err == redis.Nil {
+		if err := jwtService.SetRedisJWT(token, customer.OpenId); err != nil {
 			global.GVA_LOG.Error("设置登录状态失败!", zap.Error(err))
 			response.FailWithMessage("设置登录状态失败", c)
 			return
@@ -154,7 +203,7 @@ func (b *WXAccountApi) WXTokenNext(c *gin.Context, customer wechat.WXUser) {
 			response.FailWithMessage("jwt作废失败", c)
 			return
 		}
-		if err := jwtService.SetRedisJWT(token, customer.UUID.String()); err != nil {
+		if err := jwtService.SetRedisJWT(token, customer.OpenId); err != nil {
 			response.FailWithMessage("设置登录状态失败", c)
 			return
 		}

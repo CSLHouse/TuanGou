@@ -256,7 +256,7 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 	order.UserId = userId
 	order.CouponId = orderReq.CouponId
 	order.OrderSn = e.GenerateOrderSn(order)
-	userName := utils.GetNickName(c)
+	userName := utils.GetUserName(c)
 	if len(userName) < 1 {
 		userName = utils.GetTelephone(c)
 	}

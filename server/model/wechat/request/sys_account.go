@@ -5,11 +5,12 @@ type WXLogin struct {
 }
 
 type WXUserInfo struct {
-	OpenID    string `json:"openId" binding:"required"`
-	NickName  string `json:"nickName" binding:"required"`
-	AvatarUrl string `json:"avatarUrl" binding:"required"`
-	City      string `json:"city"`
-	Telephone string `json:"telephone" form:"telephone" gorm:"comment:手机号"`
+	OpenID     string `json:"openId" binding:"required"`
+	NickName   string `json:"nickName" binding:"required"`
+	AvatarUrl  string `json:"avatarUrl" binding:"required"`
+	City       string `json:"city"`
+	Telephone  string `json:"telephone" form:"telephone" gorm:"comment:手机号"`
+	InviteCode string `json:"inviteCode" form:"inviteCode" gorm:"comment:邀请码"`
 }
 
 type WXPhoneNumber struct {

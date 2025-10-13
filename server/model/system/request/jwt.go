@@ -16,9 +16,9 @@ type BaseClaims struct {
 	UUID        uuid.UUID
 	ID          int
 	UserName    string
-	NickName    string
 	AuthorityId int
 	Telephone   string
+	CaptainId   int
 }
 
 type WXBaseClaims struct {
