@@ -62,7 +62,7 @@
 				// token有效时间 82800000 23h
 				if (userInfo && token && (tokenTime > (new Date()).getTime())) {
 					_this.$store.state.token = token
-					if (userInfo.nickName) {
+					if (userInfo.userName) {
 						_this.$store.state.hadNickName = true
 					}
 					this.login(userInfo);

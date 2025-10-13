@@ -56,8 +56,15 @@
 							class="phone-text">{{ phoneNumber.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1****$3') }}</span>
 						<!-- 未获取手机号：显示“一键获取”按钮（带箭头） -->
 						<button v-else class="get-btn" open-type="getPhoneNumber" @getphonenumber="onGetPhoneNumber">
-							<uni-icons type="right" size="16" color="#999" class="btn-arrow"></uni-icons>
+							<uni-icons type="right" size="18"></uni-icons>
 						</button>
+					</div>
+				</div>
+				<!-- 邀请码 -->
+				<div class="form-item">
+					<label class="form-label">邀请码</label>
+					<div class="form-value">
+						<input type="text" placeholder="请输入邀请码（可选）" v-model="inviteCode" class="form-input" />
 					</div>
 				</div>
 				<!-- 4. 协议勾选（左侧勾选按钮，右侧协议文字） -->
@@ -108,6 +115,7 @@
 				defaultAvatarUrl: "/static/people.jpg",
 				city: "",
 				hasGotPhone: false,
+				inviteCode: ""
 			};
 		},
 		computed: {
@@ -125,6 +133,7 @@
 			onChooseAvatar(e) {
 
 				this.defaultAvatarUrl = e.detail.avatarUrl
+				console.log(this.defaultAvatarUrl)
 				this.hasGotUserInfo = true
 			},
 
@@ -215,6 +224,7 @@
 					nickName: _this.customNickname,
 					city: _this.city,
 					telephone: _this.phoneNumber,
+					inviteCode: _this.inviteCode,
 				}).then(res => {
 					if (res.code == 0) {
 						const userinfo = res.data
@@ -223,8 +233,10 @@
 						_this.$store.state.token = userinfo.token
 						_this.login(userinfo.customer);
 						_this.isCloseModel = true
-
+					} else {
+						_this.$api.msg(res.msg)
 					}
+
 				}).catch(errors => {
 					uni.showModal({
 						title: '提示',
@@ -254,25 +266,32 @@
 
 	/* 弹窗主体 */
 	.modal-dialog {
+		box-sizing: border-box;
 		width: 560rpx;
 		overflow: hidden;
 		position: fixed;
 		top: 30%;
-		// left: 50%;
-		// transform: translate(-50%, -50%);
-		background: #fff;
-		border-radius: 16rpx;
+		left: 0;
 		z-index: 9999;
-		overflow: hidden;
+		background: #fff;
+		margin: -150rpx 95rpx;
+		border-radius: 16rpx;
 	}
 
 	/* 弹窗内容区 */
 	.modal-content {
-		padding: 30rpx 40rpx;
+		box-sizing: border-box;
+		display: flex;
+		padding: 0rpx 53rpx 50rpx 53rpx;
+		font-size: 32rpx;
+		align-items: center;
+		justify-content: center;
+		flex-direction: column;
 	}
 
 	/* 标题样式 */
 	.title {
+		margin-top: 10px;
 		font-size: 32rpx;
 		font-weight: 600;
 		color: #333;
@@ -397,10 +416,6 @@
 		color: $uni-color-primary;
 		line-height: 1;
 		/* 清除默认行高 */
-	}
-
-	.btn-arrow {
-		margin-left: 8rpx;
 	}
 
 	/* 协议勾选区域样式 */

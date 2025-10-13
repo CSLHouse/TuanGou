@@ -195,7 +195,19 @@
 				}
 			},
 			{
-				"path": "group/group",
+				"path": "team/team",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			},
+			{
+				"path": "team/teamDetails",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			},
+			{
+				"path": "qrcode/qrcode",
 				"style": {
 					"navigationBarTitleText": ""
 				}
@@ -217,7 +229,7 @@
 	// },
 	"globalStyle": {
 		"navigationBarTextStyle": "black",
-		"navigationBarTitleText": "猪迪克星动乐园",
+		"navigationBarTitleText": "众推优购",
 		"navigationBarBackgroundColor": "#FFFFFF",
 		"backgroundColor": "#f8f8f8"
 	},

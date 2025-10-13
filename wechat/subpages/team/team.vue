@@ -10,22 +10,21 @@
 		</view>
 
 		<view class="title-area">
-			<text class="title">所在团队</text>
+			<text class="title">所在队伍</text>
 		</view>
-		<view v-if="whereInfos.length < 1">
+		<view v-if="joindInfos.length < 1">
 			<view class="wrapper">
 				<text>暂无</text>
 			</view>
 		</view>
 		<view v-else class="list b-b">
 			<view class="index">1</view>
-			<view v-for="(item, index) in whereInfos" :key="index" @click="checkAddress(item)">
+			<view v-for="(item, index) in joindInfos" :key="index" @click="checkAddress(item)">
 				<view class="wrapper">
 					<view class="avatar-container">
 						<image :src="item.avatarUrl" class="avatar"></image>
-						<!-- 角标，根据需要显示 -->
-						<view v-if="item.hasBadge" class="badge" :style="{ backgroundColor: 'green' }">
-							团</view>
+						<view v-if="item.isCaptain" class="badge" :style="{ backgroundColor: 'green' }">
+							队</view>
 						<view v-else class="badge" :style="{ backgroundColor: 'red'}">
 						</view>
 					</view>
@@ -33,86 +32,117 @@
 				</view>
 			</view>
 		</view>
+
 		<view class="title-area">
 			<text class="title">我的团队</text>
 		</view>
-		<view v-if="myGroupInfos.length < 1">
+		<view v-if="myTeamsInfos.length < 1">
 			<view class="wrapper">
 				<text>暂无</text>
 			</view>
 		</view>
-		<view class="list b-b" v-for="(groups, index) in myGroupInfos" :key="index">
-			<view class="index">{{ index + 1 }}</view>
-			<view v-for="(item, i) in groups" :key="i" @click="checkAddress(item)">
-				<view class="wrapper">
-					<view class="avatar-container">
-						<image :src="item.avatarUrl" class="avatar"></image>
-						<!-- 角标，根据需要显示 -->
-						<view v-if="item.hasBadge" class="badge" :style="{ backgroundColor: 'green' }">
-							团</view>
-						<view v-else class="badge" :style="{ backgroundColor: 'red'}">
+		<view v-for="(teams, index) in myTeamsInfos" :key="index">
+			<view class="list b-b" @click="onShowDetails(teams)">
+				<view class="index">{{ index + 1 }}</view>
+				<view v-for="(item, i) in teams" :key="i" @click="checkAddress(item)">
+					<view class="wrapper">
+						<view class="avatar-container">
+							<image :src="item.avatarUrl" class="avatar"></image>
+							<!-- 角标，根据需要显示 -->
+							<view v-if="item.isActivated" class="badge" :style="{ backgroundColor: 'green' }">
+								团</view>
+							<view v-else class="badge" :style="{ backgroundColor: 'red'}">
+							</view>
 						</view>
+						<text class="name">{{item.name}}</text>
 					</view>
-					<text class="name">{{item.name}}</text>
-
-					<!-- <image :src="item.avatarUrl" class="avatar"></image>
-					<text class="name">{{item.name}}</text> -->
 				</view>
+				<button class="get-btn" @click="onShowDetails(teams)">
+					<uni-icons type="right" size="18"></uni-icons>
+				</button>
 			</view>
 		</view>
 	</view>
 </template>
 
 <script>
+	import {
+		fetchTeamList
+	} from "@/api/team.js"
 	export default {
 		data() {
 			return {
-				whereInfos: [{
-						avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
-						name: "借我一支烟"
+				joindInfos: [{
+						avatarUrl: "http://tmp/SOXFD5VA6OOh55b1fadce8cbd79820862bcc06178395.jpeg",
+						name: "借我一支烟",
+						isCaptain: true,
 					},
 					{
-						avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
+						avatarUrl: "http://tmp/SOXFD5VA6OOh55b1fadce8cbd79820862bcc06178395.jpeg",
 						name: "借我一支烟"
 					},
-					{
-						avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
-						name: "借我一支烟"
-					}
 				],
-				myGroupInfos: [
+				myTeamsInfos: [
 					[{
-							avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
+							avatarUrl: "http://tmp/SOXFD5VA6OOh55b1fadce8cbd79820862bcc06178395.jpeg",
 							name: "借我一支烟",
-							hasBadge: true,
+							isActivated: true,
 						},
 						{
-							avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
+							avatarUrl: "http://tmp/SOXFD5VA6OOh55b1fadce8cbd79820862bcc06178395.jpeg",
 							name: "借我一支烟"
 						},
-						{
-							avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
-							name: "借我一支烟"
-						}
 					],
 					[{
-							avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
+							avatarUrl: "http://tmp/SOXFD5VA6OOh55b1fadce8cbd79820862bcc06178395.jpeg",
 							name: "借"
 						},
 						{
-							avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
+							avatarUrl: "http://tmp/SOXFD5VA6OOh55b1fadce8cbd79820862bcc06178395.jpeg",
 							name: "借我一支烟sadghdfhtjjg"
 						},
-						{
-							avatarUrl: "http://tmp/xvlLcqhV5quC9b877c9ec238082b5bdd5371d3c358b1.jpeg",
-							name: "借我一支烟"
-						}
 					]
 				],
+
 			}
 		},
+		onLoad(option) {
+			this.loadData();
+		},
 		methods: {
-
+			async loadData() {
+				let _this = this
+				if (_this.$store.state.openId) {
+					fetchTeamList({
+						openId: _this.$store.state.openId
+					}).then(response => {
+						this.joindInfos = response.data.joinedTeam
+						this.myTeamsInfos = response.data.myTeams;
+						console.log("---this.myTeamsInfos-----", this.myTeamsInfos)
+					});
+				} else {
+					uni.showToast({
+						title: '请先登录',
+						duration: 2000
+					})
+				}
+			},
+			onShowDetails(teams) {
+				let userIds = [];
+				console.log("----teams-------", teams)
+				teams.forEach(item => {
+					if (item.id) {
+						userIds.push(item.id);
+					}
+				})
+				if (userIds.length < 1) {
+					this.$api.msg("无队员！", 1000)
+					return;
+				}
+				uni.navigateTo({
+					url: `/subpages/team/teamDetails?userIds=${JSON.stringify(userIds)}`
+				})
+			}
 		}
 	}
 </script>
@@ -218,7 +248,7 @@
 
 	.wrapper {
 		display: flex;
-		width: 100px;
+		width: 120px;
 		flex-direction: column;
 		/*元素的排列方向为垂直*/
 		justify-content: center;
@@ -249,7 +279,7 @@
 		color: $font-color-light;
 		margin-top: 6px;
 		/* 固定宽度，根据需要调整 */
-		max-width: 100px;
+		max-width: 120px;
 		/* 强制不换行 */
 		white-space: nowrap;
 		/* 超出部分隐藏 */
@@ -290,5 +320,30 @@
 		text-align: center; // 文字居中
 		line-height: 30upx; // 文字垂直居中
 		border: 2upx solid white; // 白色边框，与头像区分
+	}
+
+	/* “获取”按钮样式（带箭头） */
+	.get-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+		margin: 0;
+		background: transparent;
+		border: none;
+		/* 清除默认边框 */
+		border-width: 0;
+		outline: none;
+		/* 清除聚焦边框 */
+		font-size: $uni-font-size-base;
+		color: $uni-color-primary;
+		line-height: 1;
+		/* 清除默认行高 */
+		margin: 0 20px 0 auto;
+	}
+
+	/* 清除伪元素可能带来的边框 */
+	.get-btn::after {
+		border: none !important;
 	}
 </style>

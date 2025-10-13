@@ -8,7 +8,7 @@
 				</view>
 				<view class="info-box">
 					<text class="username"
-						@click="goLogin">{{hasLogin ? userInfo.nickName || userInfo.telephone : '立即登录'}}</text>
+						@click="goLogin">{{hasLogin ? userInfo.userName || userInfo.telephone : '立即登录'}}</text>
 				</view>
 			</view>
 		</view>
@@ -21,7 +21,7 @@
 
 			<view class="tj-sction">
 				<view class="tj-item">
-					<text class="num">{{userInfo.growth || '暂无'}}</text>
+					<text class="num">{{rewardAmount || '暂无'}}</text>
 					<text>分红</text>
 				</view>
 				<view class="tj-item">
@@ -58,15 +58,18 @@
 			<!-- 浏览历史 -->
 			<view class="history-section icon">
 				<list-cell icon="icon-shoucang" iconColor="#5fcda2" title="团队管理"
-					@eventClick="navTo('/subpages/group/group')"></list-cell>
+					@eventClick="navTo('/subpages/team/team')"></list-cell>
 				<list-cell icon="icon-dizhi" iconColor="#5fcda2" title="地址管理"
 					@eventClick="navTo('/subpages/address/address')"></list-cell>
 				<!-- <list-cell icon="icon-lishijilu" iconColor="#e07472" title="我的足迹" @eventClick="navTo('/subpages/user/readHistory')"></list-cell>
 				<list-cell icon="icon-shoucang" iconColor="#5fcda2" title="我的关注" @eventClick="navTo('/subpages/user/brandAttention')"></list-cell>
 				<list-cell icon="icon-shoucang_xuanzhongzhuangtai" iconColor="#54b4ef" title="我的收藏" @eventClick="navTo('/subpages/user/productCollection')"></list-cell>
 				<list-cell icon="icon-pingjia" iconColor="#ee883b" title="我的评价"></list-cell> -->
+				<list-cell icon="icon-pingjia" iconColor="#ee883b" title="收益榜" @eventClick="handleTmp()"></list-cell>
 				<list-cell icon="icon-shezhi1" iconColor="#e07472" title="设置" border=""
 					@eventClick="navTo('/subpages/set/set')"></list-cell>
+				<list-cell icon="icon-share" iconColor="#5fcda2" title="推广二维码" border=""
+					@eventClick="navTo('/subpages/qrcode/qrcode')"></list-cell>
 			</view>
 		</view>
 
@@ -81,8 +84,10 @@
 		fetchMemberCouponList
 	} from '@/api/coupon.js';
 	import {
-		getWXPhoneNumber,
-		wxRefreshLogin,
+		fetchTeamReward
+	}
+	from "@/api/team.js"
+	import {
 		WXResetNickName
 	} from '@/api/member.js';
 	import common from '@/utils/common.js'
@@ -104,20 +109,16 @@
 				coverTransition: '0s',
 				moving: false,
 				couponCount: null,
-				isCloseModel: false,
-				isCloseNickNameModel: false,
 				nickName: '',
 				avatarUrl: null,
+				rewardAmount: 0.0
 			}
 		},
 		onLoad() {},
 		onShow() {
 			if (this.hasLogin) {
-				fetchMemberCouponList(0).then(response => {
-					if (response.data != null && response.data.list.length > 0) {
-						this.couponCount = response.data.list.length;
-					}
-				});
+				this.fetchCounponCount()
+				this.fetchTeamReward()
 			} else {
 				this.couponCount = null;
 			}
@@ -205,50 +206,29 @@
 			// 		this.$api.msg("头像设置失败", 2000)
 			// 	}
 			// },
-			// closePop() {
-			// 	this.isCloseModel = true
-			// },
-			// closeNickNamePop() {
-			// 	this.isCloseNickNameModel = true
-			// },
-			// decryptPhoneNumber: function(e) {
-			// 	let _this = this
-			// 	if (e.detail.errMsg == "getPhoneNumber:ok") {
-			// 		if (_this.$store.state.openId && _this.$store.state.openId.length > 0) {
-			// 			getWXPhoneNumber({
-			// 				openId: _this.$store.state.openId,
-			// 				code: e.detail.code
-			// 			}).then(res => {
-			// 				if (res.code == 0) {
-			// 					this.$api.msg("注册成功", 2000)
-			// 					_this.getToken()
-			// 				} else {
-			// 					this.$api.msg("注册会员失败", 2000)
-			// 				}
-			// 			});
-			// 		}
-			// 	}
-			// },
-			// getToken() {
-			// 	let _this = this
-			// 	wxRefreshLogin({
-			// 		openId: _this.$store.state.openId
-			// 	}).then(res => {
-			// 		if (res.code == 0) {
-			// 			const userinfo = res.data
-			// 			wx.setStorageSync("Token", userinfo.token)
-			// 			wx.setStorageSync("TokenTime", userinfo.expiresAt)
-			// 			_this.$store.state.token = userinfo.token
-			// 			this.login(userinfo.user);
-			// 		}
-			// 	}).catch(errors => {
-			// 		uni.showModal({
-			// 			title: '提示',
-			// 			content: '网络错误',
-			// 			showCancel: false
-			// 		})
-			// 	});
-			// },
+			async fetchCounponCount() {
+				if (this.hasLogin) {
+					fetchMemberCouponList(0).then(response => {
+						if (response.data != null && response.data.list.length > 0) {
+							this.couponCount = response.data.list.length;
+						}
+					});
+				} else {
+					this.couponCount = null;
+				}
+			},
+			async fetchTeamReward() {
+				if (this.hasLogin) {
+					fetchTeamReward().then(response => {
+						console.log("-----------fetchTeamReward-------", response)
+						if (response.data != null) {
+							console.log("-----response---", response)
+							this.rewardAmount = response.data;
+						}
+					});
+				} else {}
+			},
+
 			goLogin() {
 				this.isCloseModel = false
 			},
@@ -311,6 +291,9 @@
 			},
 			handleChooseavatar(e) {
 				this.avatarUrl = e.detail.avatarUrl;
+			},
+			handleTmp() {
+				this.$api.msg("待开放")
 			}
 		}
 	}
@@ -362,7 +345,7 @@
 		}
 
 		.username {
-			font-size: 32upx;
+			font-size: 24upx;
 			color: $font-color-dark;
 			margin-left: 20upx;
 		}

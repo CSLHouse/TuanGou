@@ -53,7 +53,7 @@ const store = new Vuex.Store({
 		login(state, provider) {
 			state.hasLogin = true;
 			state.userInfo = provider;
-			if (provider.nickName) {
+			if (provider.userName) {
 				state.hadNickName = true
 			}
 			uni.setStorage({ //缓存用户登陆状态
