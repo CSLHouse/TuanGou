@@ -20,7 +20,7 @@
 			<image class="arc" src="/static/arc.png"></image>
 
 			<view class="tj-sction">
-				<view class="tj-item">
+				<view class="tj-item" @click="onWithdrawClick()" hover-class="common-hover">
 					<text class="num">{{rewardAmount || '暂无'}}</text>
 					<text>分红</text>
 				</view>
@@ -28,7 +28,7 @@
 					<text class="num">{{userInfo.integration || '暂无'}}</text>
 					<text>积分</text>
 				</view>
-				<view class="tj-item" @click="navTo('/subpages/coupon/couponList')">
+				<view class="tj-item" @click="navTo('/subpages/coupon/couponList')" hover-class="common-hover">
 					<text class="num">{{couponCount || '暂无'}}</text>
 					<text>优惠券</text>
 				</view>
@@ -294,6 +294,11 @@
 			},
 			handleTmp() {
 				this.$api.msg("待开放")
+			},
+			onWithdrawClick() {
+				uni.navigateTo({
+					url: "/subpages/team/withdraw?count=" + this.rewardAmount
+				})
 			}
 		}
 	}
@@ -433,7 +438,7 @@
 
 		.num {
 			font-size: $font-lg;
-			color: $font-color-dark;
+			color: $font-color-high;
 			margin-bottom: 8upx;
 		}
 	}

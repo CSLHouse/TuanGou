@@ -23,3 +23,19 @@ export function fetchTeamReward(params) {
 		params: params
 	})
 }
+
+export function fetchSettlementList(params) {
+	return request({
+		method: 'GET',
+		url: `/team/settlementList`,
+		params: params
+	})
+}
+
+export function teamSettlement(data) {
+	return request({
+		method: 'POST',
+		url: `/team/settlement`,
+		data: data
+	})
+}

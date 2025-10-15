@@ -165,13 +165,13 @@
 					"navigationBarTitleText": "支付成功"
 				}
 			},
-			// {
-			// 	"path": "coupon/couponList",
-			// 	"style": {
-			// 		"enablePullDownRefresh": true,
-			// 		"navigationBarTitleText": "优惠券列表"
-			// 	}
-			// }, 
+			{
+				"path": "coupon/couponList",
+				"style": {
+					"enablePullDownRefresh": true,
+					"navigationBarTitleText": "优惠券列表"
+				}
+			},
 			{
 				"path": "brand/brandDetail",
 				"style": {
@@ -208,6 +208,24 @@
 			},
 			{
 				"path": "qrcode/qrcode",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			},
+			{
+				"path": "team/rewardList",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			},
+			{
+				"path": "team/withdraw",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			},
+			{
+				"path": "feedback/feedback",
 				"style": {
 					"navigationBarTitleText": ""
 				}

@@ -70,6 +70,12 @@
 		"optimization": {
 			"subPackages": true //是否启用分包优化
 		},
+		// "plugins": {
+		// 	"logisticsPlugin": {
+		// 		"version": "2.1.5",
+		// 		"provider": "wxa055c151dc6028d3"
+		// 	}
+		// },
 		"lazyCodeLoading": "requiredComponents"
 	},
 	"h5": {

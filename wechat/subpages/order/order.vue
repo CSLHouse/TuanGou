@@ -1,8 +1,8 @@
 <template>
 	<view class="content">
 		<view class="navbar">
-			<view v-for="(item, index) in navList" :key="index" class="nav-item" :class="{current: tabCurrentIndex === index}"
-			 @click="tabClick(index)">
+			<view v-for="(item, index) in navList" :key="index" class="nav-item"
+				:class="{current: tabCurrentIndex === index}" @click="tabClick(index)">
 				{{item.text}}
 			</view>
 		</view>
@@ -18,21 +18,25 @@
 						<div @click="showOrderDetail(item.id)">
 							<div @click="showOrderDetail(item.id)">
 								<view class="i-top b-b">
-									<text class="time" >{{item.CreatedAt | formatDateTime}}</text>
-									<text class="state" :style="{color: '#fa436a'}">{{item.status | formatStatus}}</text>
-									<text v-if="item.status===3||item.status===4" class="del-btn yticon icon-iconfontshanchu1" @click="deleteOrder(item.id)"></text>
+									<text class="time">{{item.CreatedAt | formatDateTime}}</text>
+									<text class="state"
+										:style="{color: '#fa436a'}">{{item.status | formatStatus}}</text>
+									<text v-if="item.status===3||item.status===4"
+										class="del-btn yticon icon-iconfontshanchu1"
+										@click="deleteOrder(item.id)"></text>
 								</view>
 								<view class="goods-box-single" v-for="(orderItem, itemIndex) in item.orderItemList"
-								 :key="itemIndex">
+									:key="itemIndex">
 									<image class="goods-img" :src="orderItem.productPic" mode="aspectFill"></image>
 									<view class="right">
 										<text class="title clamp">{{orderItem.productName}}</text>
-										<text class="attr-box">{{orderItem.productAttr | formatProductAttr}} x {{orderItem.quantity}}</text>
+										<text class="attr-box">{{orderItem.productAttr | formatProductAttr}} x
+											{{orderItem.quantity}}</text>
 										<text class="price">{{orderItem.price}}</text>
 									</view>
 								</view>
 							</div>
-							
+
 							<view class="price-box">
 								共
 								<text class="num">{{calcTotalQuantity(item)}}</text>
@@ -44,14 +48,15 @@
 								<button class="action-btn recom" @click="payOrder(item.id)">立即付款</button>
 							</view>
 							<view class="action-box b-t" v-if="item.status == 2">
-								<button class="action-btn" >查看物流</button>
+								<button class="action-btn">查看物流</button>
 								<button class="action-btn recom" @click="receiveOrder(item.id)">确认收货</button>
 							</view>
 							<view class="action-box b-t" v-if="item.status == 3">
-								<button class="action-btn recom" >评价商品</button>
+								<button class="action-btn recom">评价商品</button>
+								<button class="action-btn" @click="afterSale(item.billId,index)">申请售后</button>
 							</view>
 						</div>
-						
+
 					</view>
 
 					<uni-load-more :status="loadingType"></uni-load-more>
@@ -88,7 +93,7 @@
 					pageSize: 5
 				},
 				orderList: [],
-				loadingType:'more',
+				loadingType: 'more',
 				navList: [{
 						state: -1,
 						text: '全部'
@@ -173,10 +178,10 @@
 		},
 		methods: {
 			//获取订单列表
-			loadData(type='refresh') {
-				if(type=='refresh'){
-					this.orderParam.page=1;
-				}else{
+			loadData(type = 'refresh') {
+				if (type == 'refresh') {
+					this.orderParam.page = 1;
+				} else {
 					this.orderParam.page++;
 				}
 				//这里是将订单挂载到tab列表下
@@ -193,14 +198,14 @@
 					// console.log("--fetchOrderList--", response)
 					if (response.code == 0) {
 						let list = response.data.list;
-						if(type=='refresh'){
+						if (type == 'refresh') {
 							this.orderList = list;
 							this.loadingType = 'more';
-						}else{
-							if(list!=null&&list.length>0){
+						} else {
+							if (list != null && list.length > 0) {
 								this.orderList = this.orderList.concat(list);
 								this.loadingType = 'more';
-							}else{
+							} else {
 								this.orderParam.page--;
 								this.loadingType = 'noMore';
 							}
@@ -221,89 +226,95 @@
 			deleteOrder(orderId) {
 				let superThis = this;
 				uni.showModal({
-				    title: '提示',
-				    content: '是否要删除该订单？',
-				    success: function (res) {
-				        if (res.confirm) {
-				            uni.showLoading({
-				            	title: '请稍后'
-				            })
-				            deleteUserOrder({orderId:orderId}).then(response=>{
-				            	uni.hideLoading();
-				            	superThis.loadData();
-				            });
-				        } else if (res.cancel) {
-				            // console.log('用户点击取消');
-				        }
-				    }
+					title: '提示',
+					content: '是否要删除该订单？',
+					success: function(res) {
+						if (res.confirm) {
+							uni.showLoading({
+								title: '请稍后'
+							})
+							deleteUserOrder({
+								orderId: orderId
+							}).then(response => {
+								uni.hideLoading();
+								superThis.loadData();
+							});
+						} else if (res.cancel) {
+							// console.log('用户点击取消');
+						}
+					}
 				});
 			},
 			//取消订单
 			cancelOrder(orderId) {
 				let superThis = this;
 				uni.showModal({
-				    title: '提示',
-				    content: '是否要取消该订单？',
-				    success: function (res) {
-				        if (res.confirm) {
-				            uni.showLoading({
-				            	title: '请稍后'
-				            })
-				            cancelUserOrder({id:orderId}).then(response=>{
-				            	uni.hideLoading();
-				            	uni.navigateBack({
-				            	    delta: 1
-				            	});
+					title: '提示',
+					content: '是否要取消该订单？',
+					success: function(res) {
+						if (res.confirm) {
+							uni.showLoading({
+								title: '请稍后'
+							})
+							cancelUserOrder({
+								id: orderId
+							}).then(response => {
+								uni.hideLoading();
+								uni.navigateBack({
+									delta: 1
+								});
 
-				            });
-				        } else if (res.cancel) {
-				            console.log('用户点击取消');
-				        }
-				    }
+							});
+						} else if (res.cancel) {
+							console.log('用户点击取消');
+						}
+					}
 				});
 			},
 			//支付订单
-			payOrder(orderId){
+			payOrder(orderId) {
 				uni.redirectTo({
 					url: `/subpages/order/orderDetail?orderId=${orderId}`
 				});
 			},
 			//确认收货
-			receiveOrder(orderId){
+			receiveOrder(orderId) {
 				let superThis = this;
 				uni.showModal({
-				    title: '提示',
-				    content: '是否要确认收货？',
-				    success: function (res) {
-				        if (res.confirm) {
-				            uni.showLoading({
-				            	title: '请稍后'
-				            })
-				            confirmReceiveOrder({orderId:orderId}).then(response=>{
-				            	uni.hideLoading();
-				            	uni.navigateBack({
-				            	    delta: 1
-				            	});
+					title: '提示',
+					content: '是否要确认收货？',
+					success: function(res) {
+						if (res.confirm) {
+							uni.showLoading({
+								title: '请稍后'
+							})
+							confirmReceiveOrder({
+								orderId: orderId
+							}).then(response => {
+								uni.hideLoading();
+								uni.navigateBack({
+									delta: 1
+								});
 
-				            });
-				        } else if (res.cancel) {
-				            // console.log('用户点击取消');
-				        }
-				    }
+							});
+						} else if (res.cancel) {
+							// console.log('用户点击取消');
+						}
+					}
 				});
 			},
 			//查看订单详情
-			showOrderDetail(orderId){
+			showOrderDetail(orderId) {
 				uni.navigateTo({
 					url: `/subpages/order/orderDetail?orderId=${orderId}`
 				})
 			},
 			//计算商品总数量
-			calcTotalQuantity(order){
+			calcTotalQuantity(order) {
 				let totalQuantity = 0;
-				if(order.orderItemList!=null&&order.orderItemList.length>0){
-					for(let item of order.orderItemList){
-						totalQuantity+=item.quantity
+				if (order.orderItemList != null && order.orderItemList.length > 0) {
+					for (let item of order.orderItemList) {
+						totalQuantity += item.quantity
 					}
 				}
 				return totalQuantity;
