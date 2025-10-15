@@ -53,6 +53,7 @@ type TeamSettlement struct {
 	TotalAmount    float32   `json:"totalAmount" form:"totalAmount" gorm:"not null;comment:结算总金额"`
 	SettlementTime time.Time `json:"settlementTime" form:"settlementTime" gorm:"not null;comment:结算时间"`
 	Status         int       `json:"status" form:"status" gorm:"not null;default:0;comment:结算状态，0:待处理,1:已完成"`
+	WXUser         WXUser    `json:"wxUser" form:"wxUser" gorm:"foreignKey:UserId;references：ID;comment:管理WXUser"`
 }
 
 func (TeamSettlement) TableName() string { return "ums_team_settlement" }

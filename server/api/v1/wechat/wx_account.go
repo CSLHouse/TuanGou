@@ -113,7 +113,7 @@ func (b *WXAccountApi) CreateWXUserInfo(c *gin.Context) {
 	wxUser.CaptainId = int(upperUserId)
 	wxUser.AuthorityId = 9528
 
-	wxUser, err = accountService.CreateWXAccount(&wxUser)
+	wxUser, isCreate, err := accountService.CreateWXAccount(&wxUser)
 	if err != nil {
 		global.GVA_LOG.Error(err.Error(), zap.Error(err))
 		response.FailWithMessage(err.Error(), c)
@@ -121,7 +121,7 @@ func (b *WXAccountApi) CreateWXUserInfo(c *gin.Context) {
 	}
 	fmt.Println("---wxUser:", wxUser)
 	// 生成邀请码
-	if wxUser.ID > 0 {
+	if wxUser.ID > 0 && isCreate {
 		g := utils.NewGenerator[uint16](utils.CHARSET, 6)
 		// 通过一个现有的非负整数ID生成对应的邀请码
 		curUID := uint16(wxUser.ID)

@@ -3,16 +3,14 @@ package wechat
 import (
 	"context"
 	"cooller/server/global"
+	"cooller/server/model/common/request"
 	"cooller/server/model/common/response"
 	"cooller/server/model/wechat"
 	wechatReq "cooller/server/model/wechat/request"
 	wechatRes "cooller/server/model/wechat/response"
 	"cooller/server/utils"
-	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
-
 	"go.uber.org/zap"
 	"math/rand"
 	"time"
@@ -257,7 +255,7 @@ func (t *TeamApi) getCachedTeamMembers(captainId int) ([]wechat.TeamRecord, erro
 	}
 
 	// 缓存未命中，从数据库获取（一次查询）
-	members, err := teamService.GetTeamMembers(captainId)
+	members, err := teamService.GetAllTeamMembers(captainId)
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +338,7 @@ func (t *TeamApi) calculateMemberGroupRewardInMemory(userId int, captainId int) 
 	}
 
 	// 2. 获取该团队的所有成员
-	teamMembers, err := teamService.GetTeamMembers(myTeam.TeamId)
+	teamMembers, err := teamService.GetTeamMembers(myTeam.CaptainId, myTeam.TeamId)
 	if err != nil {
 		return 0, err
 	}
@@ -380,201 +378,77 @@ func (t *TeamApi) calculateMemberGroupRewardInMemory(userId int, captainId int) 
 	return groupRewardPool * memberShare, nil
 }
 
-func (t *TeamApi) GetTeamReward1(c *gin.Context) {
-	userId := utils.GetUserID(c)
-	if userId < 1 {
-		global.GVA_LOG.Error("获取userId错误!")
-		response.FailWithMessage("获取userId错误!", c)
-		return
-	}
-	captainId := utils.GetCaptainId(c)
-	// 获取我邀请的所有人
-	myTeamRecordList, err := teamService.GetMyTeamsRecordList(userId)
-	if err != nil {
-		global.GVA_LOG.Error("获取失败!", zap.Error(err))
-		response.FailWithMessage("获取失败", c)
-		return
-	}
-
-	totalAmount := float32(0)
-	teamActivatedMap := map[int][]wechat.TeamRecord{}
-	// 记录我邀请的所有激活队伍的人
-	for _, teamRecord := range myTeamRecordList {
-		if teamRecord.TeamId > 0 {
-			teamActivatedMap[teamRecord.TeamId] = append(teamActivatedMap[teamRecord.TeamId], teamRecord)
-		}
-	}
-
-	// 获取所有成员的消费记录并存入字典
-	consumeRecordMap := map[int][]wechat.TeamConsumeRecord{}
-	consumeRecord, err := teamService.GetTeamConsumeRecordListByUsers(userId)
-	if err != nil {
-		global.GVA_LOG.Error("获取消费记录失败!", zap.Error(err))
-		response.FailWithMessage("获取消费记录失败!", c)
-		return
-	}
-	for _, consume := range consumeRecord {
-		consumeRecordMap[consume.UserId] = append(consumeRecordMap[consume.UserId], consume)
-	}
-
-	for _, teamItems := range teamActivatedMap {
-		if len(teamItems) > 1 { // team有两个人，已经成团
-			// 成团，totalAmount = 首推奖励（首购金额x12%）+ 成团奖励：成员首购总额×5%x×50% + 复购奖励（复购金额x20%）
-			firstConsumeTotal := float32(0)
-			loseUserMap := map[int]bool{}
-			for _, teamItem := range teamItems { // 2个成员分别计算
-				loseUserMap[teamItem.UserId] = true
-				for _, consumeItem := range consumeRecordMap[teamItem.UserId] {
-					if consumeItem.IsFirst > 0 {
-						totalAmount += consumeItem.Amount * 0.12 // 首推奖励
-						firstConsumeTotal += consumeItem.Amount
-						loseUserMap[teamItem.UserId] = false
-					} else {
-						totalAmount += consumeItem.Amount * 0.2 // 复购奖励
-					}
-				}
-			}
-			for id, state := range loseUserMap {
-				if state {
-					firstConsume, err := teamService.GetLoseFirstConsumeRecord(id)
-					if err != nil {
-						global.GVA_LOG.Error("获取丢失的首购失败!", zap.Error(err))
-						response.FailWithMessage("获取丢失的首购失败!", c)
-						return
-					}
-					firstConsumeTotal += firstConsume.Amount
-				}
-			}
-			totalAmount += firstConsumeTotal * 0.05 * 0.5 // 队长获得成团奖池的50%
-		} else {
-			//	未成团，totalAmount = 首推奖励（首购金额x12%）+ 复购奖励（复购金额x20%）
-			for _, consumeItem := range consumeRecordMap[teamItems[0].UserId] {
-				if consumeItem.IsFirst > 0 {
-					totalAmount += consumeItem.Amount * 0.12 // 首推奖励
-				} else {
-					totalAmount += consumeItem.Amount * 0.2 // 复购奖励
-				}
-			}
-		}
-	}
-
-	// 计算我所在team是否成团，是否分得成团奖励
-	joinedTeam, err := teamService.GetUserJoinedTeam(userId, captainId)
-	if err != nil {
-		global.GVA_LOG.Error("获取所在队伍失败!", zap.Error(err))
-		response.FailWithMessage("获取所在队伍失败!", c)
-		return
-	}
-
-	teamList, err := teamService.GetTeamRecordList(joinedTeam.TeamId, captainId)
-	if err != nil {
-		global.GVA_LOG.Error("获取队伍失败!", zap.Error(err))
-		response.FailWithMessage("获取队伍失败!", c)
-		return
-	}
-	if len(teamList) > 1 {
-		firstConsumeTotal := float32(0)
-		loseUserMap := map[int]bool{}
-		for _, team := range teamList {
-			loseUserMap[team.UserId] = true
-			firstConsume, err := teamService.GetTeamFirstConsumeRecord(team.UserId)
-			if err != nil {
-				global.GVA_LOG.Error("获取首购失败!", zap.Error(err))
-				response.FailWithMessage("获取首购失败!", c)
-				return
-			}
-			if firstConsume.Amount > 0 {
-				loseUserMap[team.UserId] = false
-				firstConsumeTotal += firstConsume.Amount
-			}
-		}
-		for id, state := range loseUserMap {
-			if state {
-				firstConsume, err := teamService.GetLoseFirstConsumeRecord(id)
-				if err != nil {
-					global.GVA_LOG.Error("获取丢失的首购失败!", zap.Error(err))
-					response.FailWithMessage("获取丢失的首购失败!", c)
-					return
-				}
-				firstConsumeTotal += firstConsume.Amount
-			}
-		}
-		totalAmount += firstConsumeTotal * 0.05 * 0.25 // 成员获得奖池的25%
-	}
-	response.OkWithData(totalAmount, c)
-}
-
 // SettlementTeamReward 执行团队奖励结算（含事务和缓存同步）
-func (t *TeamApi) SettlementTeamReward(userId int, captainId int) (float32, error) {
-	// 1. 先查询当前可结算金额（确保使用最新数据，跳过缓存）
-	rewardAmount, err := t.calculateTeamRewardWithoutCache(userId, captainId)
-	if err != nil {
-		return 0, fmt.Errorf("计算可结算金额失败: %w", err)
-	}
-
-	if rewardAmount <= 0 {
-		return 0, errors.New("没有可结算的奖励金额")
-	}
-
-	// 2. 开启数据库事务执行结算
-	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
-		// 2.1 创建结算记录
-		settlement := wechat.TeamSettlement{
-			UserId:         userId,
-			SettlementNo:   t.generateSettlementNo(userId),
-			TotalAmount:    rewardAmount,
-			SettlementTime: time.Now(),
-			Status:         1, // 直接标记为已完成
-		}
-		if err := tx.Create(&settlement).Error; err != nil {
-			return fmt.Errorf("创建结算记录失败: %w", err)
-		}
-		now := settlement.SettlementTime
-
-		// 2.2 获取用户作为队长的所有未结算消费记录
-		captainConsumes, err := teamService.GetUnsettledConsumesByCaptainSync(tx, userId)
-		if err != nil {
-			return fmt.Errorf("查询队长消费记录失败: %w", err)
-		}
-
-		// 2.3 获取用户作为成员的未结算成团奖励记录
-		memberGroupRewards, err := t.getUnsettledMemberGroupRewards(tx, userId)
-		if err != nil {
-			return fmt.Errorf("查询成员成团奖励失败: %w", err)
-		}
-
-		// 2.4 更新首推/复购奖励结算状态
-		if len(captainConsumes) > 0 {
-			err = teamService.UpdateFirstAndRepurchaseStatusSync(tx, t.extractIds(captainConsumes), now)
-			if err != nil {
-				return fmt.Errorf("更新首推奖励结算状态失败: %w", err)
-			}
-		}
-
-		// 2.5 更新成团奖励结算状态
-		if memberGroupRewards != nil {
-			err = teamService.UpdateTeamSettleStatusSync(tx, memberGroupRewards.ID, now)
-			if err != nil {
-				return fmt.Errorf("更新成团奖励结算状态失败: %w", err)
-			}
-
-			// 更新团队结算状态
-			if err := t.updateUserTeamSettledStatus(tx, userId); err != nil {
-				return fmt.Errorf("更新团队结算状态失败: %w", err)
-			}
-		}
-		return nil
-	})
-
-	if err != nil {
-		return 0, err
-	}
-
-	// 3. 结算成功后刷新所有相关缓存（关键步骤）
-	t.refreshSettlementRelatedCache(userId, captainId)
-
-	return rewardAmount, nil
-}
+//func (t *TeamApi) SettlementTeamReward(userId int, captainId int) (float32, error) {
+//	// 1. 先查询当前可结算金额（确保使用最新数据，跳过缓存）
+//	rewardAmount, err := t.calculateTeamRewardWithoutCache(userId, captainId)
+//	if err != nil {
+//		return 0, fmt.Errorf("计算可结算金额失败: %w", err)
+//	}
+//
+//	if rewardAmount <= 0 {
+//		return 0, errors.New("没有可结算的奖励金额")
+//	}
+//
+//	// 2. 开启数据库事务执行结算
+//	err = global.GVA_DB.Transaction(func(tx *gorm.DB) error {
+//		// 2.1 创建结算记录
+//		settlement := wechat.TeamSettlement{
+//			UserId:         userId,
+//			SettlementNo:   t.generateSettlementNo(userId),
+//			TotalAmount:    rewardAmount,
+//			SettlementTime: time.Now(),
+//			Status:         1, // 直接标记为已完成
+//		}
+//		if err := tx.Create(&settlement).Error; err != nil {
+//			return fmt.Errorf("创建结算记录失败: %w", err)
+//		}
+//		now := settlement.SettlementTime
+//
+//		// 2.2 获取用户作为队长的所有未结算消费记录
+//		captainConsumes, err := teamService.GetUnsettledConsumesByCaptainSync(tx, userId)
+//		if err != nil {
+//			return fmt.Errorf("查询队长消费记录失败: %w", err)
+//		}
+//
+//		// 2.3 获取用户作为成员的未结算成团奖励记录
+//		memberGroupRewards, err := t.getUnsettledMemberGroupRewards(tx, userId)
+//		if err != nil {
+//			return fmt.Errorf("查询成员成团奖励失败: %w", err)
+//		}
+//
+//		// 2.4 更新首推/复购奖励结算状态
+//		if len(captainConsumes) > 0 {
+//			err = teamService.UpdateFirstAndRepurchaseStatusSync(tx, t.extractIds(captainConsumes), now)
+//			if err != nil {
+//				return fmt.Errorf("更新首推奖励结算状态失败: %w", err)
+//			}
+//		}
+//
+//		// 2.5 更新成团奖励结算状态
+//		if memberGroupRewards != nil {
+//			err = teamService.UpdateTeamSettleStatusSync(tx, memberGroupRewards.ID, now)
+//			if err != nil {
+//				return fmt.Errorf("更新成团奖励结算状态失败: %w", err)
+//			}
+//
+//			// 更新团队结算状态
+//			if err := t.updateUserTeamSettledStatus(tx, userId); err != nil {
+//				return fmt.Errorf("更新团队结算状态失败: %w", err)
+//			}
+//		}
+//		return nil
+//	})
+//
+//	if err != nil {
+//		return 0, err
+//	}
+//
+//	// 3. 结算成功后刷新所有相关缓存（关键步骤）
+//	t.refreshSettlementRelatedCache(userId, captainId)
+//
+//	return rewardAmount, nil
+//}
 
 func (t *TeamApi) extractIds(consumes []wechat.TeamConsumeRecord) []int {
 	ids := make([]int, len(consumes))
@@ -587,7 +461,7 @@ func (t *TeamApi) extractIds(consumes []wechat.TeamConsumeRecord) []int {
 // 不使用缓存计算可结算金额（确保结算金额准确）
 func (t *TeamApi) calculateTeamRewardWithoutCache(userId int, captainId int) (float32, error) {
 	// 计算最新值
-	members, err := teamService.GetTeamMembers(userId)
+	members, err := teamService.GetAllTeamMembers(userId)
 	if err != nil {
 		return 0, err
 	}
@@ -610,11 +484,12 @@ func (t *TeamApi) calculateTeamRewardWithoutCache(userId int, captainId int) (fl
 		consumeMap[consume.UserId] = append(consumeMap[consume.UserId], consume)
 	}
 
-	// 计算队长奖励
+	// 计算作为队长奖励
 	totalReward := t.calculateCaptainReward(teamMap, consumeMap)
-
-	// 计算成员奖励
+	global.GVA_LOG.Error(fmt.Sprintf("----计算作为队长奖励：%f", totalReward))
+	// 计算作为成员奖励
 	memberReward, err := t.calculateMemberGroupRewardInMemory(userId, captainId)
+	global.GVA_LOG.Error(fmt.Sprintf("----计算作为成员奖励：%f", memberReward))
 	if err != nil {
 		return 0, err
 	}
@@ -644,40 +519,39 @@ func (t *TeamApi) refreshSettlementRelatedCache(userId int, captainId int) {
 }
 
 // 辅助函数：获取用户作为成员的已满足条件的成团奖励记录
-func (t *TeamApi) getUnsettledMemberGroupRewards(tx *gorm.DB, userId int) (*wechat.TeamConsumeRecord, error) {
-	// 1. 获取用户所在的团队
-	myTeam, err := teamService.GetUserJoinedTeamByDBSync(tx, userId)
-	if err != nil || myTeam == nil {
-		return nil, err
-	}
-
-	// 2. 检查团队是否满足成团条件
-	teamMembers, err := teamService.GetTeamMembersByDBSync(tx, myTeam.TeamId)
-	if err != nil {
-		return nil, err
-	}
-
-	// 团队成员不足2人，不满足成团条件
-	if len(teamMembers) < 2 {
-		return nil, nil
-	}
-
-	// 3. 获取该用户在这个团队中的未结算成团奖励的首购记录
-	groupReward, err := teamService.GetTeamFirstConsumeRecordSync(tx, userId)
-	if err != nil {
-		return nil, err
-	}
-	return groupReward, err
-
-}
+//func (t *TeamApi) getUnsettledMemberGroupRewards(tx *gorm.DB, userId int) (*wechat.TeamConsumeRecord, error) {
+//	// 1. 获取用户所在的团队
+//	myTeam, err := teamService.GetUserJoinedTeamByDBSync(tx, userId)
+//	if err != nil || myTeam == nil {
+//		return nil, err
+//	}
+//
+//	// 2. 检查团队是否满足成团条件
+//	teamMembers, err := teamService.GetTeamMembersByDBSync(tx, myTeam.TeamId)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	// 团队成员不足2人，不满足成团条件
+//	if len(teamMembers) < 2 {
+//		return nil, nil
+//	}
+//
+//	// 3. 获取该用户在这个团队中的未结算成团奖励的首购记录
+//	groupReward, err := teamService.GetTeamFirstConsumeRecordSync(tx, userId)
+//	if err != nil {
+//		return nil, err
+//	}
+//	return groupReward, err
+//}
 
 // 辅助函数：更新用户参与的团队结算状态
-func (t *TeamApi) updateUserTeamSettledStatus(tx *gorm.DB, userId int) error {
-	// 更新用户作为成员的团队结算状态
-	return tx.Model(&wechat.TeamRecord{}).
-		Where("user_id = ?", userId).
-		Update("is_settled", 1).Error
-}
+//func (t *TeamApi) updateUserTeamSettledStatus(tx *gorm.DB, userId int) error {
+//	// 更新用户作为成员的团队结算状态
+//	return tx.Model(&wechat.TeamRecord{}).
+//		Where("user_id = ?", userId).
+//		Update("is_settled", 1).Error
+//}
 
 // 辅助函数：生成唯一结算单号
 func (t *TeamApi) generateSettlementNo(userId int) string {
@@ -717,7 +591,6 @@ func (t *TeamApi) GetTeamConsumeDetails(c *gin.Context) {
 		return
 	}
 
-	fmt.Println(userInfo.UserIds)
 	consumeList, err := teamService.GetTeamsConsumeList(userId, userInfo.UserIds)
 	if err != nil {
 		global.GVA_LOG.Error("获取消费列表错误!")
@@ -745,4 +618,99 @@ func (t *TeamApi) GetTeamConsumeDetails(c *gin.Context) {
 	response.OkWithData(wechatRes.ConsumeDetailsResponse{
 		Details: detailsMap,
 	}, c)
+}
+
+func (t *TeamApi) GetTeamSettlementList(c *gin.Context) {
+	var pageInfo request.PageInfo
+	err := c.ShouldBindQuery(&pageInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	err = utils.Verify(pageInfo, utils.PageInfoVerify)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	userId := utils.GetUserID(c)
+	list, total, err := teamService.GetTeamSettlementList(pageInfo, userId)
+	if err != nil {
+		global.GVA_LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败"+err.Error(), c)
+		return
+	}
+	response.OkWithDetailed(response.PageResult{
+		List:     list,
+		Total:    total,
+		Page:     pageInfo.Page,
+		PageSize: pageInfo.PageSize,
+	}, "获取成功", c)
+}
+
+// GenerateSettlement 发起结算
+func (t *TeamApi) GenerateSettlement(c *gin.Context) {
+	var info wechatReq.SettlementInfo
+	err := c.ShouldBindJSON(&info)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if len(info.OpenId) < 1 {
+		response.FailWithMessage("OpenId不可为空", c)
+		return
+	}
+	if info.Amount < 0.03 {
+		response.FailWithMessage("不足以提现", c)
+		return
+	}
+	userId := utils.GetUserID(c)
+	captainId := utils.GetCaptainId(c)
+
+	//先查询当前可结算金额（确保使用最新数据，跳过缓存）
+	rewardAmount, err := t.calculateTeamRewardWithoutCache(userId, captainId)
+	if err != nil {
+		response.FailWithMessage("查询当前可结算金额错误", c)
+		return
+	}
+	global.GVA_LOG.Error(fmt.Sprintf("----结算当前可结算金额：%f, %f", rewardAmount, info.Amount))
+
+	if rewardAmount <= 0 && info.Amount != rewardAmount {
+		response.FailWithMessage("结算金额不一致", c)
+		return
+	}
+
+	// 1 获取用户作为队长的所有未结算消费记录
+	captainConsumes, err := teamService.GetUnsettledConsumesByCaptainSync(userId)
+	if err != nil {
+		response.FailWithMessage("获取作为队长的所有未结算消费记录失败", c)
+		return
+	}
+
+	// 2.4 更新首推/复购奖励结算状态
+	var consumesIds []int
+	if len(captainConsumes) > 0 {
+		consumesIds = t.extractIds(captainConsumes)
+	}
+
+	// 2 获取用户作为成员的未结算成团奖励记录
+	memberGroupRewards, err := teamService.GetUnsettledMemberGroupRewards(userId)
+	consumesId := 0
+	if memberGroupRewards != nil {
+		consumesId = memberGroupRewards.ID
+	}
+
+	var settlement wechat.TeamSettlement
+	settlement.UserId = userId
+	settlement.SettlementNo = t.generateSettlementNo(userId)
+	settlement.TotalAmount = info.Amount
+	settlement.SettlementTime = time.Now()
+	settlement.Status = 0
+	err = teamService.CreateTeamSettlementSync(consumesIds, consumesId, &settlement)
+	if err != nil {
+		response.FailWithMessage("创建结算单失败！", c)
+		return
+	}
+	// 3. 结算成功后刷新所有相关缓存（关键步骤）
+	t.refreshSettlementRelatedCache(userId, captainId)
+	response.OkWithMessage("创建结算单成功！", c)
 }

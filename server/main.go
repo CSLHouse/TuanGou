@@ -35,7 +35,7 @@ func main() {
 		fmt.Println("add timer error:", err)
 	}
 	initialize.DBList()
-
+	initialize.WeChatPay() // 初始化微信支付
 	//tm := timer.NewTimer()
 	//tm.ScheduleFunc(30*time.Minute, func() {
 	//	business.CheckQrCodeExpired()

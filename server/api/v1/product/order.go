@@ -388,7 +388,7 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		return
 	}
 
-	err = orderService.UpdateOrderPrepayId(order.ID, *res.PrepayId)
+	err = orderService.UpdateOrderPaySuccess(order.ID, *res.PrepayId)
 	if err != nil {
 		global.GVA_LOG.Error("更新订单预支付交易会话标识失败!", zap.Error(err))
 		response.FailWithMessage(err.Error(), c)

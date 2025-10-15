@@ -2,7 +2,10 @@ package wechat
 
 import (
 	"cooller/server/global"
+	"cooller/server/model/common/request"
 	"cooller/server/model/wechat"
+	"errors"
+	"fmt"
 	"gorm.io/gorm"
 	"time"
 )
@@ -23,9 +26,9 @@ func (exa *TeamService) GetUserJoinedTeam(userId int, captainId int) (teamRecord
 	return teamRecord, nil
 }
 
-func (exa *TeamService) GetUserJoinedTeamByDBSync(tx *gorm.DB, userId int) (*wechat.TeamRecord, error) {
+func (exa *TeamService) GetUserJoinedTeamByDBSync(userId int) (*wechat.TeamRecord, error) {
 	var teamRecord wechat.TeamRecord
-	err := tx.Where("user_id = ? AND is_activated = 1", userId).First(&teamRecord).Error
+	err := global.GVA_DB.Debug().Where("user_id = ?", userId).First(&teamRecord).Error
 	if err != nil {
 		return nil, err
 	}
@@ -44,8 +47,8 @@ func (exa *TeamService) GetCaptainTeamConsumeRecordList(captainId int) (list []w
 	return list, err
 }
 
-func (exa *TeamService) GetUnsettledConsumesByCaptainSync(tx *gorm.DB, captainId int) (list []wechat.TeamConsumeRecord, err error) {
-	err = tx.Where("captain_id = ? AND is_first_reward_settled = 0", captainId).Find(&list).Error
+func (exa *TeamService) GetUnsettledConsumesByCaptainSync(captainId int) (list []wechat.TeamConsumeRecord, err error) {
+	err = global.GVA_DB.Debug().Where("captain_id = ? AND is_first_reward_settled = 0", captainId).Find(&list).Error
 	return list, err
 }
 
@@ -62,9 +65,12 @@ func (exa *TeamService) GetTeamFirstConsumeRecord(userId int) (item wechat.TeamC
 }
 
 // GetTeamFirstConsumeRecordSync 获取该用户在这个团队中的未结算成团奖励的首购记录
-func (exa *TeamService) GetTeamFirstConsumeRecordSync(tx *gorm.DB, userId int) (groupReward *wechat.TeamConsumeRecord, err error) {
-	err = tx.Where("user_id = ? AND is_first = 1 AND  is_group_reward_settled = 0", userId).First(&groupReward).Error
-	if err != nil {
+func (exa *TeamService) GetTeamFirstConsumeRecordSync(userId int) (groupReward *wechat.TeamConsumeRecord, err error) {
+	result := global.GVA_DB.Where("user_id = ? AND is_first = 1 AND  is_group_reward_settled = 0", userId).First(&groupReward)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return groupReward, err
@@ -82,12 +88,13 @@ func (exa *TeamService) GetTeamRecordList(teamId int, captainId int) (list []wec
 	return list, err
 }
 
-func (exa *TeamService) GetTeamMembersByDBSync(tx *gorm.DB, teamId int) ([]wechat.TeamRecord, error) {
+func (exa *TeamService) GetTeamMembers(captainId int, teamId int) ([]wechat.TeamRecord, error) {
 	var members []wechat.TeamRecord
-	return members, tx.Where("team_id = ? AND is_activated = 1", teamId).Find(&members).Error
+	err := global.GVA_DB.Where("captain_id = ? AND team_id = ?", captainId, teamId).Find(&members).Error
+	return members, err
 }
 
-func (exa *TeamService) GetTeamMembers(captainId int) (members []wechat.TeamRecord, err error) {
+func (exa *TeamService) GetAllTeamMembers(captainId int) (members []wechat.TeamRecord, err error) {
 	db := global.GVA_DB.Model(&wechat.TeamRecord{})
 	err = db.Where("captain_id = ?", captainId).Find(&members).Error
 	return members, err
@@ -134,4 +141,99 @@ func (exa *TeamService) GetTeamsConsumeList(captainId int, userIds []int) (list 
 	db := global.GVA_DB.Model(&wechat.TeamConsumeRecord{})
 	err = db.Where("user_id IN ? AND captain_id = ?", userIds, captainId).Preload("WXUser").Find(&list).Error
 	return list, err
+}
+
+// CreateTeamSettlementSync 创建结算单
+// consumesIds 用户作为队长的所有未结算消费记录的id
+// 用户作为成员的未结算成团奖励记录
+func (exa *TeamService) CreateTeamSettlementSync(consumesIds []int, consumesId int, data *wechat.TeamSettlement) (err error) {
+	tx := global.GVA_DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if tx.Error != nil {
+		return err
+	}
+
+	// 创建结算单
+	err = tx.Model(&wechat.TeamSettlement{}).Create(data).Error
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 2.4 更新首推/复购奖励结算状态
+	if len(consumesIds) > 0 {
+		err = exa.UpdateFirstAndRepurchaseStatusSync(tx, consumesIds, data.SettlementTime)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("更新首推奖励结算状态失败: %w", err)
+		}
+	}
+
+	// 2.5 更新成团奖励结算状态
+	if consumesId != 0 {
+		err = exa.UpdateTeamSettleStatusSync(tx, consumesId, data.SettlementTime)
+		if err != nil {
+			tx.Rollback()
+			return fmt.Errorf("更新成团奖励结算状态失败: %w", err)
+		}
+
+		// 更新团队结算状态
+		if err := exa.UpdateUserTeamSettledStatus(tx, data.UserId); err != nil {
+			tx.Rollback()
+			return fmt.Errorf("更新团队结算状态失败: %w", err)
+		}
+	}
+	return tx.Commit().Error
+}
+
+func (exa *TeamService) UpdateUserTeamSettledStatus(tx *gorm.DB, userId int) (err error) {
+	err = tx.Model(&wechat.TeamRecord{}).Where("user_id = ?", userId).Update("is_settled", 1).Error
+	return err
+}
+
+func (exa *TeamService) GetTeamSettlementList(searchInfo request.PageInfo, userId int) (list []wechat.TeamSettlement, total int64, err error) {
+	limit := searchInfo.PageSize
+	offset := searchInfo.PageSize * (searchInfo.Page - 1)
+
+	db := global.GVA_DB.Model(&wechat.TeamSettlement{})
+	err = db.Count(&total).Error
+	if err != nil {
+		return list, total, err
+	} else {
+		err = db.Limit(limit).Offset(offset).Where("user_id = ?", userId).Preload("WXUser").Find(&list).Error
+	}
+
+	return list, total, err
+}
+
+// 辅助函数：获取用户作为成员的已满足条件的成团奖励记录
+func (exa *TeamService) GetUnsettledMemberGroupRewards(userId int) (*wechat.TeamConsumeRecord, error) {
+	// 1. 获取用户所在的团队
+	myTeam, err := exa.GetUserJoinedTeamByDBSync(userId)
+	if err != nil || myTeam == nil {
+		return nil, err
+	}
+
+	// 2. 检查团队是否满足成团条件
+	teamMembers, err := exa.GetTeamMembers(myTeam.CaptainId, myTeam.TeamId)
+	if err != nil {
+		return nil, err
+	}
+
+	// 团队成员不足2人，不满足成团条件
+	if len(teamMembers) < 2 {
+		return nil, errors.New("must have at least two team members")
+	}
+
+	// 3. 获取该用户在这个团队中的未结算成团奖励的首购记录
+	groupReward, err := exa.GetTeamFirstConsumeRecordSync(userId)
+	if err != nil {
+		return nil, err
+	}
+	return groupReward, err
 }

@@ -228,9 +228,9 @@ func (o *OrderService) UpdateOrderStatusByOrderSn(orderSn *string, status int) (
 	return err
 }
 
-func (o *OrderService) UpdateOrderPrepayId(id int, prepayId string) (err error) {
+func (o *OrderService) UpdateOrderPaySuccess(id int, prepayId string) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
-	err = db.Debug().Where("id = ?", id).UpdateColumn("prepay_id", prepayId).Error
+	err = db.Debug().Where("id = ?", id).Updates(map[string]interface{}{"prepay_id": prepayId, "status": 1}).Error
 	return err
 }
 

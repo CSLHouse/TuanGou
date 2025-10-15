@@ -21,7 +21,8 @@ func (e *TeamRouter) InitTeamRouter(Router *gin.RouterGroup) {
 		teamRouterWithoutRecord.GET("teamList", teamApi.GetTeamRecordList)
 		teamRouterWithoutRecord.POST("detail", teamApi.GetTeamConsumeDetails)
 		teamRouterWithoutRecord.GET("reward", teamApi.GetTeamReward)
-
+		teamRouterWithoutRecord.GET("settlementList", teamApi.GetTeamSettlementList)
+		teamRouterWithoutRecord.POST("settlement", teamApi.GenerateSettlement)
 	}
 
 }
