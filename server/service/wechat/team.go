@@ -4,6 +4,8 @@ import (
 	"cooller/server/global"
 	"cooller/server/model/common/request"
 	"cooller/server/model/wechat"
+	wechatReq "cooller/server/model/wechat/request"
+	"cooller/server/utils/timer"
 	"errors"
 	"fmt"
 	"gorm.io/gorm"
@@ -118,21 +120,21 @@ func (exa *TeamService) GetUserUnsettledFirstConsumes(userId int) (consumes *wec
 	return consumes, nil
 }
 
-func (exa *TeamService) UpdateFirstAndRepurchaseStatusSync(tx *gorm.DB, consumesId []int, now time.Time) (err error) {
+func (exa *TeamService) UpdateFirstAndRepurchaseStatusSync(tx *gorm.DB, consumesId []int) (err error) {
 	err = tx.Model(&wechat.TeamConsumeRecord{}).Where("id IN (?)", consumesId).
 		Updates(map[string]interface{}{
 			"is_first_reward_settled":  1,
-			"first_reward_settle_time": &now,
+			"first_reward_settle_time": time.Now(),
 		}).Error
 	return err
 }
 
 // UpdateTeamSettleStatusSync 更新成团奖励结算状态
-func (exa *TeamService) UpdateTeamSettleStatusSync(tx *gorm.DB, consumeId int, now time.Time) (err error) {
+func (exa *TeamService) UpdateTeamSettleStatusSync(tx *gorm.DB, consumeId int) (err error) {
 	err = tx.Model(&wechat.TeamConsumeRecord{}).Where("id = ?", consumeId).
 		Updates(map[string]interface{}{
 			"is_group_reward_settled":  1,
-			"group_reward_settle_time": &now,
+			"group_reward_settle_time": time.Now(),
 		}).Error
 	return err
 }
@@ -167,7 +169,7 @@ func (exa *TeamService) CreateTeamSettlementSync(consumesIds []int, consumesId i
 
 	// 2.4 更新首推/复购奖励结算状态
 	if len(consumesIds) > 0 {
-		err = exa.UpdateFirstAndRepurchaseStatusSync(tx, consumesIds, data.SettlementTime)
+		err = exa.UpdateFirstAndRepurchaseStatusSync(tx, consumesIds)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("更新首推奖励结算状态失败: %w", err)
@@ -176,7 +178,7 @@ func (exa *TeamService) CreateTeamSettlementSync(consumesIds []int, consumesId i
 
 	// 2.5 更新成团奖励结算状态
 	if consumesId != 0 {
-		err = exa.UpdateTeamSettleStatusSync(tx, consumesId, data.SettlementTime)
+		err = exa.UpdateTeamSettleStatusSync(tx, consumesId)
 		if err != nil {
 			tx.Rollback()
 			return fmt.Errorf("更新成团奖励结算状态失败: %w", err)
@@ -196,16 +198,49 @@ func (exa *TeamService) UpdateUserTeamSettledStatus(tx *gorm.DB, userId int) (er
 	return err
 }
 
-func (exa *TeamService) GetTeamSettlementList(searchInfo request.PageInfo, userId int) (list []wechat.TeamSettlement, total int64, err error) {
-	limit := searchInfo.PageSize
-	offset := searchInfo.PageSize * (searchInfo.Page - 1)
+func (exa *TeamService) GetTeamSettlementList(searchInfo wechatReq.SettlementSearchInfo) (list []wechat.TeamSettlement, total int64, err error) {
+	// 处理分页参数默认值，避免页码或页大小为负数/零
+	page := searchInfo.Page
+	if page <= 0 {
+		page = 1
+	}
+	pageSize := searchInfo.PageSize
+	if pageSize <= 0 || pageSize > 100 { // 限制最大页大小，防止恶意请求
+		pageSize = 10
+	}
+	limit := pageSize
+	offset := pageSize * (page - 1)
 
 	db := global.GVA_DB.Model(&wechat.TeamSettlement{})
+	// 构建查询条件（使用Gorm链式调用，避免手动拼接SQL，防止注入并适配数据库）
+	if searchInfo.UserId > 0 {
+		db = db.Where("user_id = ?", searchInfo.UserId)
+	}
+	if searchInfo.SettlementNo != "" {
+		// 模糊查询需手动拼接%，Gorm会自动处理参数绑定
+		db = db.Where("settlement_no LIKE ?", "%"+searchInfo.SettlementNo+"%")
+	}
+	if len(searchInfo.CreatedAt) > 0 {
+		// 时间比较：这里示例为查询"结算时间晚于传入时间"，可根据需求改为 >= / < / <=
+		// Gorm会自动处理time.Time类型的参数绑定，无需手动格式化
+		db = db.Where("created_at >= ?", timer.ParseStringDate(searchInfo.CreatedAt))
+	}
+	// 判断前端是否传了时间值（指针不为nil即表示传了值）
+	if len(searchInfo.SettlementTime) > 0 {
+		// 时间比较：这里示例为查询"结算时间晚于传入时间"，可根据需求改为 >= / < / <=
+		// Gorm会自动处理time.Time类型的参数绑定，无需手动格式化
+		db = db.Where("settlement_time >= ?", timer.ParseStringDate(searchInfo.SettlementTime))
+	}
+	if searchInfo.Status > 0 {
+		db = db.Where("status = ?", searchInfo.Status-100)
+	}
+
 	err = db.Count(&total).Error
 	if err != nil {
 		return list, total, err
 	} else {
-		err = db.Limit(limit).Offset(offset).Where("user_id = ?", userId).Preload("WXUser").Find(&list).Error
+
+		err = db.Limit(limit).Offset(offset).Debug().Preload("WXUser").Find(&list).Error
 	}
 
 	return list, total, err
@@ -236,4 +271,17 @@ func (exa *TeamService) GetUnsettledMemberGroupRewards(userId int) (*wechat.Team
 		return nil, err
 	}
 	return groupReward, err
+}
+
+// GetUnsettleRecord 获取还未结算的记录
+func (exa *TeamService) GetUnsettleRecord(userId int) (item *wechat.TeamSettlement, err error) {
+	db := global.GVA_DB.Model(&wechat.TeamSettlement{})
+	err = db.Where("user_id = ? and status = 0", userId).First(item).Error
+	return item, err
+}
+
+func (exa *TeamService) UpdateTeamSettleStatus(info request.StatusUpdateInfo) (err error) {
+	db := global.GVA_DB.Model(&wechat.TeamSettlement{})
+	err = db.Debug().Where("id = ?", info.ID).UpdateColumn("status", info.Status).Error
+	return err
 }

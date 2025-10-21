@@ -63,7 +63,7 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 0, Hidden: false, ParentId: "0", Path: "systemTools", Name: "systemTools", Component: "view/systemTools/index.vue", Sort: 4, Meta: Meta{Title: "系统工具", Icon: "tools"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "8", Path: "system", Name: "system", Component: "view/systemTools/system/system.vue", Sort: 1, Meta: Meta{Title: "系统管理", Icon: "operation"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "8", Path: "setting", Name: "setting", Component: "view/systemTools/setting/setting.vue", Sort: 2, Meta: Meta{Title: "系统配置", Icon: "setting"}},
-		{MenuLevel: 0, Hidden: false, ParentId: "0", Path: "state", Name: "state", Component: "view/system/state.vue", Sort: 8, Meta: Meta{Title: "服务器状态", Icon: "cloudy"}},
+		{MenuLevel: 0, Hidden: false, ParentId: "0", Path: "state", Name: "state", Component: "view/system/state.vue", Sort: 9, Meta: Meta{Title: "服务器状态", Icon: "cloudy"}},
 		//{MenuLevel: 0, Hidden: false, ParentId: "0", Path: "members", Name: "members", Component: "view/members/index.vue", Sort: 2, Meta: Meta{Title: "会员管理", Icon: "chat-dot-square"}},
 		//{MenuLevel: 0, Hidden: false, ParentId: "12", Path: "newMember", Name: "newMember", Component: "view/members/newMember/newMember.vue", Sort: 1, Meta: Meta{Title: "新会员办理", Icon: "shop"}},
 		//{MenuLevel: 0, Hidden: false, ParentId: "12", Path: "oldMember", Name: "oldMember", Component: "view/members/oldMember/oldMember.vue", Sort: 2, Meta: Meta{Title: "老会员续卡", Icon: "shopping-cart"}},
@@ -102,6 +102,8 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 0, Hidden: true, ParentId: "26", Path: "addCoupon", Name: "addCoupon", Component: "view/marketing/coupon/add.vue", Sort: 10, Meta: Meta{Title: "添加优惠券", Icon: "Ticket"}},
 		{MenuLevel: 0, Hidden: true, ParentId: "26", Path: "couponHistory", Name: "couponHistory", Component: "view/marketing/coupon/history.vue", Sort: 11, Meta: Meta{Title: "优惠券领取详情", Icon: "Ticket"}},
 		{MenuLevel: 0, Hidden: true, ParentId: "26", Path: "updateCoupon", Name: "updateCoupon", Component: "view/marketing/coupon/update.vue", Sort: 12, Meta: Meta{Title: "修改优惠券", Icon: "Ticket"}},
+		{MenuLevel: 0, Hidden: false, ParentId: "0", Path: "settlement", Name: "Settlement", Component: "view/settlement/index.vue", Sort: 8, Meta: Meta{Title: "结算", Icon: "Ticket"}},
+		{MenuLevel: 0, Hidden: false, ParentId: "39", Path: "settlementList", Name: "settlementList", Component: "view/settlement/settlementList/settlementList.vue", Sort: 1, Meta: Meta{Title: "结算列表", Icon: "Document"}},
 	}
 	if err = db.Create(&entities).Error; err != nil {
 		return ctx, errors.Wrap(err, SysBaseMenu{}.TableName()+"表数据初始化失败!")

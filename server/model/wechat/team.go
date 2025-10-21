@@ -48,12 +48,13 @@ func (TeamConsumeRecord) TableName() string { return "ums_team_consume_record" }
 // TeamSettlement 团队结算记录，用于汇总每次结算
 type TeamSettlement struct {
 	global.GVA_MODEL
-	UserId         int       `json:"userId" form:"userId" gorm:"not null;index"`
-	SettlementNo   string    `json:"settlementNo" form:"settlementNo" gorm:"not null;unique;comment:结算单号"`
-	TotalAmount    float32   `json:"totalAmount" form:"totalAmount" gorm:"not null;comment:结算总金额"`
-	SettlementTime time.Time `json:"settlementTime" form:"settlementTime" gorm:"not null;comment:结算时间"`
-	Status         int       `json:"status" form:"status" gorm:"not null;default:0;comment:结算状态，0:待处理,1:已完成"`
-	WXUser         WXUser    `json:"wxUser" form:"wxUser" gorm:"foreignKey:UserId;references：ID;comment:管理WXUser"`
+	UserId         int        `json:"userId" form:"userId" gorm:"not null;index"`
+	UserName       string     `json:"userName" form:"userName" `
+	SettlementNo   string     `json:"settlementNo" form:"settlementNo" gorm:"not null;unique;comment:结算单号"`
+	TotalAmount    float32    `json:"totalAmount" form:"totalAmount" gorm:"not null;comment:结算总金额"`
+	SettlementTime *time.Time `json:"settlementTime" form:"settlementTime" gorm:"comment:结算时间"`
+	Status         int        `json:"status" form:"status" gorm:"not null;default:0;comment:结算状态，0:待处理,1:已完成"`
+	WXUser         WXUser     `json:"wxUser" form:"wxUser" gorm:"foreignKey:UserId;references：ID;comment:管理WXUser"`
 }
 
 func (TeamSettlement) TableName() string { return "ums_team_settlement" }

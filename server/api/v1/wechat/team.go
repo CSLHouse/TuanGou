@@ -621,7 +621,7 @@ func (t *TeamApi) GetTeamConsumeDetails(c *gin.Context) {
 }
 
 func (t *TeamApi) GetTeamSettlementList(c *gin.Context) {
-	var pageInfo request.PageInfo
+	var pageInfo wechatReq.SettlementSearchInfo
 	err := c.ShouldBindQuery(&pageInfo)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -632,8 +632,7 @@ func (t *TeamApi) GetTeamSettlementList(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	userId := utils.GetUserID(c)
-	list, total, err := teamService.GetTeamSettlementList(pageInfo, userId)
+	list, total, err := teamService.GetTeamSettlementList(pageInfo)
 	if err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))
 		response.FailWithMessage("获取失败"+err.Error(), c)
@@ -665,7 +664,11 @@ func (t *TeamApi) GenerateSettlement(c *gin.Context) {
 	}
 	userId := utils.GetUserID(c)
 	captainId := utils.GetCaptainId(c)
-
+	result, err := teamService.GetUnsettleRecord(userId)
+	if err == nil || result != nil {
+		response.FailWithMessage("有未结算的账单", c)
+		return
+	}
 	//先查询当前可结算金额（确保使用最新数据，跳过缓存）
 	rewardAmount, err := t.calculateTeamRewardWithoutCache(userId, captainId)
 	if err != nil {
@@ -701,9 +704,10 @@ func (t *TeamApi) GenerateSettlement(c *gin.Context) {
 
 	var settlement wechat.TeamSettlement
 	settlement.UserId = userId
+	settlement.UserName = utils.GetUserName(c)
 	settlement.SettlementNo = t.generateSettlementNo(userId)
 	settlement.TotalAmount = info.Amount
-	settlement.SettlementTime = time.Now()
+	//settlement.SettlementTime = time.Now()
 	settlement.Status = 0
 	err = teamService.CreateTeamSettlementSync(consumesIds, consumesId, &settlement)
 	if err != nil {
@@ -713,4 +717,23 @@ func (t *TeamApi) GenerateSettlement(c *gin.Context) {
 	// 3. 结算成功后刷新所有相关缓存（关键步骤）
 	t.refreshSettlementRelatedCache(userId, captainId)
 	response.OkWithMessage("创建结算单成功！", c)
+}
+
+func (t *TeamApi) UpdateSettlementStatus(c *gin.Context) {
+	var info request.StatusUpdateInfo
+	err := c.ShouldBindJSON(&info)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if info.ID < 1 {
+		response.FailWithMessage("OpenId不可为空", c)
+		return
+	}
+	err = teamService.UpdateTeamSettleStatus(info)
+	if err != nil {
+		response.FailWithMessage("创建结算单失败！", c)
+		return
+	}
+	response.OkWithMessage("更新结算单状态成功！", c)
 }
