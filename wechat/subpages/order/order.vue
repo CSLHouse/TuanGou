@@ -53,7 +53,7 @@
 							</view>
 							<view class="action-box b-t" v-if="item.status == 3">
 								<button class="action-btn recom">评价商品</button>
-								<button class="action-btn" @click="afterSale(item.billId,index)">申请售后</button>
+								<button class="action-btn" @click="afterSale(item.id, index)">申请售后</button>
 							</view>
 						</div>
 
@@ -318,6 +318,12 @@
 					}
 				}
 				return totalQuantity;
+			},
+			// 申请售后
+			async afterSale(billId, index) {
+				uni.navigateTo({
+					url: `/pages/feedback/feedback?billId=` + billId + "&index=" + index
+				})
 			},
 		},
 	}
