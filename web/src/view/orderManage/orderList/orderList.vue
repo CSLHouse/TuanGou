@@ -59,6 +59,17 @@
       <el-card class="operate-container" shadow="never">
         <i class="el-icon-tickets"></i>
         <span>数据列表</span>
+        <div class="btn-add">
+          <el-badge class="item" :hidden="savingIds.length < 1" :value="savingIds.length" >
+            <el-button
+              :style="{ backgroundColor: isChange ? '#4d70ff' : '', color: isChange ? '#fff' : '' }"
+              icon="DocumentChecked"
+              @click="handleSaveAllChage()"
+              size="small">
+              保存
+            </el-button>
+          </el-badge>
+        </div>
       </el-card>
       <div class="table-container">
         <el-table ref="orderTable"
@@ -87,6 +98,53 @@
           </el-table-column>
           <el-table-column label="订单状态" width="120" align="center">
             <template #default="scope">{{formatStatus(scope.row.status)}}</template>
+          </el-table-column>
+          <el-table-column label="物流公司" width="120" align="center">
+            <template #default="scope">{{scope.row.logisticsCompany}}</template>
+          </el-table-column>
+          <el-table-column label="物流单号" min-width="120" align="center">
+            <template #default="scope">
+              <!-- 非编辑状态显示文本和编辑按钮 -->
+              <div class="logistics-sn-container" v-if="!scope.row.isEditing">
+                <span :style="{ color: scope.row.isChange ? 'red' : '' }">{{ scope.row.logisticsSn }}</span>
+                <el-icon 
+                  class="edit-icon" 
+                  @click="handleEdit(scope.row)"
+                  v-if="scope.row.status === 1 || scope.row.status === 2"
+                >
+                  <Edit />
+                </el-icon>
+              </div>
+              
+              <!-- 编辑状态显示输入框和操作按钮 -->
+              <div class="edit-container" v-else>
+                <el-input 
+                      v-model="scope.row.logisticsSn" 
+                      size="small" 
+                      autofocus
+                      @change="handleSnChange(scope.row)">
+                    </el-input>
+
+                <!-- <el-popconfirm
+                  class="box-item"
+                  confirm-button-text="保存"
+                  title="是否保存？"
+                  placement="top-start"
+                  @cancel="handleCancelEdit(scope.row)"
+                  @confirm="handleSaveEdit(scope.row)"
+                >
+                  <template #reference>
+                    <el-input 
+                      v-model="scope.row.logisticsSn" 
+                      size="small" 
+                      autofocus
+                      @blur="() => {}"
+                      @keyup.enter.native="handleSaveEdit(scope.row)">
+                    </el-input>
+                  </template>
+                </el-popconfirm> -->
+              </div>
+            </template>
           </el-table-column>
           <el-table-column label="操作" width="200" align="center">
             <template #default="scope">
@@ -163,16 +221,14 @@
     </div>
   </template>
   <script>
-    import {fetchList,closeOrder,deleteOrder,updateOrderCompletedStatus} from '@/api/order'
+    import {fetchList,closeOrder,deleteOrder,updateOrderCompletedStatus, updateOrderLogistics} from '@/api/order'
     import {formatDate} from '@/utils/date';
-    import { useUserStore } from '@/pinia/modules/user'
-    const userStore = useUserStore()
     const defaultListQuery = {
       page: 1,
       pageSize: 10,
       orderSn: null,
       receiverKeyword: null,
-      state: null,
+      state: -1,
       orderType: null,
     //   sourceType: null,
       createTime: null,
@@ -193,6 +249,10 @@
             orderIds:[]
           },
           statusOptions: [
+            {
+              label: '全部',
+              value: -1
+            },
             {
               label: '待付款',
               value: 0
@@ -238,7 +298,9 @@
               value: 3
             }
           ],
-          logisticsDialogVisible:false
+          logisticsDialogVisible:false,
+          savingIds: [], // 用于保存正在提交的订单ID，防止重复提交
+          isChange: false, // 标记整个页面数据是否有变化
         }
       },
       created() {
@@ -370,7 +432,13 @@
           this.listLoading = true;
           fetchList(this.listQuery).then(response => {
             this.listLoading = false;
-            this.list = response.data.list;
+            // this.list = response.data.list;
+            // 为每条数据添加isChange和originalLogisticsSn属性
+            this.list = response.data.list.map(item => ({
+              ...item,
+              isChange: false, // 初始为false（未变化）
+              originalLogisticsSn: item.logisticsSn // 存储原始物流单号
+            }));
             this.total = response.data.total;
           });
         },
@@ -400,12 +468,138 @@
             });
           })
         },
+        handleEdit(row){
+          row.originalLogisticsSn = row.logisticsSn; // 保存原始值
+          row.isEditing = true;
+        },
+        // 保存编辑的物流单号
+        // handleSaveEdit(row) {
+        //   const logisticsSn = (row.logisticsSn || '').trim();
+          
+        //   if (!logisticsSn) {
+        //     this.$message({
+        //       message: '物流单号不能为空',
+        //       type: 'warning',
+        //       duration: 1000
+        //     });
+        //     return;
+        //   }
+          
+        //   if (logisticsSn === row.originalLogisticsSn) {
+        //     row.isEditing = false;
+        //     return;
+        //   }
+          
+        //   this.savingIds.push(row.id);
+          
+        //   // 假设存在更新物流单号的接口，实际项目中替换为真实接口
+        //   // 这里使用setTimeout模拟接口请求
+        //   setTimeout(() => {
+        //     this.$message({
+        //       message: '物流单号更新成功',
+        //       type: 'success',
+        //       duration: 1000
+        //     });
+        //     row.isEditing = false;
+        //     this.savingIds = this.savingIds.filter(id => id !== row.id);
+        //   }, 500);
+        // },
+        
+        // // 取消编辑物流单号
+        // handleCancelEdit(row) {
+        //   row.logisticsSn = row.originalLogisticsSn;
+        //   row.isEditing = false;
+        // },
+        handleSnChange(row) {
+          // 这里可以添加对物流单号变化的处理逻辑
+          const logisticsSn = (row.logisticsSn || '').trim();
+          
+          if (!logisticsSn) {
+            this.$message({
+              message: '物流单号不能为空',
+              type: 'warning',
+              duration: 1000
+            });
+            return;
+          }
+          
+          if (logisticsSn === row.originalLogisticsSn) {
+            row.isEditing = false;
+            return;
+          }
+          
+          if (!this.savingIds.includes(row.id)) {
+            this.savingIds.push(row.id);
+          }
+          
+          row.isChange = true; // 标记为已变化
+          row.isEditing = false;
+          this.isChange = true; // 标记整个页面数据有变化
+        },
+        handleSaveAllChage() {
+          const changedRows = this.list.filter(row => row.isChange);
+          
+          if (changedRows.length === 0) {
+            this.$message({
+              message: '没有需要保存的更改',
+              type: 'info',
+              duration: 1000
+            });
+            return;
+          }
+          const logisticsData = changedRows.map(row => ({
+            id: row.id,
+            logisticsSn: row.logisticsSn,
+            logisticsCompany: row.logisticsCompany
+          }));
+          updateOrderLogistics({"logisticsInfos": logisticsData}).then(response=>{
+            if (response.code === 0) {
+              this.isChange = false; // 重置页面变化标记
+              this.savingIds = []; // 清空保存中的ID列表
+              changedRows.forEach(row => {
+                row.isChange = false; // 重置变化标记
+              });
+              this.$message({
+                message: '更新成功！',
+                type: 'success',
+                duration: 1000
+              });
+            } else {
+              this.$message({
+                message: response.msg || '更新失败，请重试！',
+                type: 'error',
+                duration: 1000
+              });
+              return;
+            }
+          })
+        },
+    
       }
     }
   </script>
   <style scoped>
     .input-width {
       width: 203px;
+    }
+    .edit-icon {
+      color: #409eff;
+      cursor: pointer;
+      font-size: 16px;
+      transition: color 0.2s;
+    }
+
+    .edit-icon:hover {
+      color: #66b1ff;
+    }
+
+    .edit-container {
+      position: relative;
+    }
+
+    .item {
+      margin-top: 10px;
+      margin-right: 40px;
     }
   </style>
   

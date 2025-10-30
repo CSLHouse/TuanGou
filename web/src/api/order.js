@@ -93,3 +93,11 @@ export function updateOrderSetting(data) {
     data:data
   });
 }
+
+export function updateOrderLogistics(data) {
+  return request({
+    url:'/order/logistics',
+    method:'put',
+    data:data
+  });
+}
