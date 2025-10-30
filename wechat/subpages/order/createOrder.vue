@@ -266,12 +266,13 @@
 					orderParam.couponId = this.currCoupon.id;
 				}
 				generateOrder(orderParam).then(response => {
-					let orderId = response.data.orderId;
-					let payment = response.data.payment
+					console.log("---generateOrder--", response)
 					if (response.data.code != 0 && response.data.code == 7) {
 						this.$api.msg("请勿重复下单！！")
 						return
 					}
+					let orderId = response.data.orderId;
+					let payment = response.data.payment
 					// deletCartItemWithList({
 					// 	ids: _this.cartIds
 					// }).then(response => {

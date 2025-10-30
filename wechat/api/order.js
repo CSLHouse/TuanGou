@@ -75,3 +75,11 @@ export function deleteUserOrder(data) {
 		data: data
 	})
 }
+
+export function queryLogisticsInfo(data) {
+	return request({
+		method: 'POST',
+		url: '/logistics/info',
+		data: data
+	})
+}

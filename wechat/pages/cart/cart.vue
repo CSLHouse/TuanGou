@@ -27,7 +27,7 @@
 						<view class="item-right">
 							<text class="clamp title">{{item.product.Name}}</text>
 							<text class="attr">{{item.spDataStr}}</text>
-							<text class="price">¥{{item.skuStock.promotionPrice}}</text>
+							<text class="price">¥{{item.skuStock.price}}</text>
 							<uni-number-box class="step" :min="0" :max="100" :value="item.quantity" :index="index"
 								@eventChange="numberChange"></uni-number-box>
 						</view>
@@ -204,7 +204,7 @@
 				let checked = true;
 				list.forEach(item => {
 					if (item.checked === true) {
-						total += item.skuStock.promotionPrice * item.quantity;
+						total += item.skuStock.price * item.quantity;
 					} else if (checked === true) {
 						checked = false;
 					}

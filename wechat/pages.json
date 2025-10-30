@@ -229,6 +229,12 @@
 				"style": {
 					"navigationBarTitleText": ""
 				}
+			},
+			{
+				"path": "logistics/logistics",
+				"style": {
+					"navigationBarTitleText": ""
+				}
 			}
 			// {
 			// 	"path": "product/list",

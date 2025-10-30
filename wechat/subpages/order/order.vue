@@ -30,8 +30,8 @@
 									<image class="goods-img" :src="orderItem.productPic" mode="aspectFill"></image>
 									<view class="right">
 										<text class="title clamp">{{orderItem.productName}}</text>
-										<text class="attr-box">{{orderItem.productAttr | formatProductAttr}} x
-											{{orderItem.quantity}}</text>
+										<text class="attr-box">{{orderItem.productAttr | formatProductAttr}}
+											x{{orderItem.quantity}}</text>
 										<text class="price">{{orderItem.price}}</text>
 									</view>
 								</view>
@@ -48,7 +48,7 @@
 								<button class="action-btn recom" @click="payOrder(item.id)">立即付款</button>
 							</view>
 							<view class="action-box b-t" v-if="item.status == 2">
-								<button class="action-btn">查看物流</button>
+								<button class="action-btn" @click="handleShowLogistics(item.id)">查看物流</button>
 								<button class="action-btn recom" @click="receiveOrder(item.id)">确认收货</button>
 							</view>
 							<view class="action-box b-t" v-if="item.status == 3">
@@ -157,8 +157,8 @@
 			},
 			formatProductAttr(jsonAttr) {
 				// console.log("--[formatProductAttr]-jsonAttr:", jsonAttr)
-				// let attrArr = JSON.parse(jsonAttr);
-				let attrArr = jsonAttr;
+				let attrArr = JSON.parse(jsonAttr);
+				// let attrArr = jsonAttr;
 				let attrStr = '';
 				for (let attr of attrArr) {
 					attrStr += attr.key;
@@ -195,7 +195,7 @@
 				this.orderParam.state = state;
 				this.loadingType = 'loading';
 				fetchOrderList(this.orderParam).then(response => {
-					// console.log("--fetchOrderList--", response)
+					console.log("--fetchOrderList--", response)
 					if (response.code == 0) {
 						let list = response.data.list;
 						if (type == 'refresh') {
@@ -325,6 +325,11 @@
 					url: `/pages/feedback/feedback?billId=` + billId + "&index=" + index
 				})
 			},
+			handleShowLogistics(orderId) {
+				uni.navigateTo({
+					url: `/subpages/logistics/logistics?orderId=${orderId}`
+				})
+			}
 		},
 	}
 </script>
