@@ -38,7 +38,7 @@ type CalcAmount struct {
 }
 
 type GenerateOrderResModel struct {
-	CartPromotionItemList    []*product.CartPromotionItem  `json:"cartPromotionItemList" gorm:"null;default null"`
+	CartPromotionItemList    []*product.OrderItem          `json:"cartPromotionItemList" gorm:"null;default null"`
 	MemberReceiveAddressList []wechat.MemberReceiveAddress `json:"memberReceiveAddressList" gorm:"null;default null"`
 	CouponHistoryDetailList  []*product.CouponHistory      `json:"couponHistoryDetailList" gorm:"null;default null"`
 	//IntegrationConsumeSetting int                           `json:"integrationConsumeSetting" gorm:"null;default null"`

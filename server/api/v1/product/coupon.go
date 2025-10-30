@@ -268,7 +268,7 @@ func (e *CouponApi) generateCouponCode(memberId int64) string {
 	return sb
 }
 
-func (e *CouponApi) ListCart(userId int, cartItemList []*product.CartPromotionItem, enable int) (couponHistorylList []*product.CouponHistory, err error) {
+func (e *CouponApi) ListCart(userId int, cartItemList []*product.OrderItem, enable int) (couponHistorylList []*product.CouponHistory, err error) {
 	// 获取该用户所有优惠券
 	allList, err := couponService.GetUserCouponHistoryById(userId)
 	if err != nil {
@@ -325,7 +325,7 @@ func (e *CouponApi) ListCart(userId int, cartItemList []*product.CartPromotionIt
 	return disableList, err
 }
 
-func (e *CouponApi) calcTotalAmount(cartItemList []*product.CartPromotionItem) float32 {
+func (e *CouponApi) calcTotalAmount(cartItemList []*product.OrderItem) float32 {
 	total := float32(0)
 	for _, item := range cartItemList {
 		realPrice := item.Price - item.ReduceAmount
@@ -334,7 +334,7 @@ func (e *CouponApi) calcTotalAmount(cartItemList []*product.CartPromotionItem) f
 	return total
 }
 
-func (e *CouponApi) calcTotalAmountByproductCategoryId(cartItemList []*product.CartPromotionItem, productCategoryIds []int) float32 {
+func (e *CouponApi) calcTotalAmountByproductCategoryId(cartItemList []*product.OrderItem, productCategoryIds []int) float32 {
 	cateIdsMap := make(map[int]bool)
 	for _, v := range productCategoryIds {
 		cateIdsMap[v] = true
@@ -351,7 +351,7 @@ func (e *CouponApi) calcTotalAmountByproductCategoryId(cartItemList []*product.C
 	return total
 }
 
-func (e *CouponApi) calcTotalAmountByProductId(cartItemList []*product.CartPromotionItem, productIds []int) float32 {
+func (e *CouponApi) calcTotalAmountByProductId(cartItemList []*product.OrderItem, productIds []int) float32 {
 	prodIdsMap := make(map[int]bool)
 	for _, v := range productIds {
 		prodIdsMap[v] = true

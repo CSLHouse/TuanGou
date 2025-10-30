@@ -47,3 +47,8 @@ func BuildTheTimeStr() string {
 	nowTime := time.Now()
 	return fmt.Sprintf("%d-%02d-%02d %02d:%02d", nowTime.Year(), nowTime.Month(), nowTime.Day(), nowTime.Hour(), nowTime.Minute())
 }
+
+// FormatTime： 毫秒级时间戳转可读时间格式（如：2024-10-30 11:58:02）
+func FormatTime(timestamp int64) string {
+	return time.UnixMilli(timestamp).Format("2006-01-02 15:04:05")
+}

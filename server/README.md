@@ -51,9 +51,13 @@
 | `utils`      | 工具包                  | 工具函数封装            |
 | `--timer` | timer | 定时器接口封装 |
 | `--upload`      | oss                  | oss接口封装        |
+-----------------------------------
+- 微信支付 go sdk https://github.com/wechatpay-apiv3/wechatpay-go
+- 物流查询api apispace：
+https://www.apispace.com/eolink/api/wlgj1/introduction
+https://www.apispace.com/eolink/test/wlgj1?org_id=74827&project_id=1316
 
-微信支付 go sdk https://github.com/wechatpay-apiv3/wechatpay-go
-
+-----------------------------------
 最终优化方案：首推佣金“12%+18%循环”+2人成团，贴合预期且裂变动力拉满
 
 一、核心规则框架（完全匹配你的建议，简化无冗余）
@@ -108,3 +112,4 @@
 
 TODO:
 1. 留存率、日活等统计
+

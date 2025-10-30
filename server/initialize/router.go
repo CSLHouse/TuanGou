@@ -20,10 +20,11 @@ func Routers() *gin.Engine {
 	InstallPlugin(Router) // 安装插件
 	systemRouter := router.RouterGroupApp.System
 	exampleRouter := router.RouterGroupApp.Example
-	businessRouter := router.RouterGroupApp.Business
+	//businessRouter := router.RouterGroupApp.Business
 	wechatRouter := router.RouterGroupApp.Wechat
 	payRouter := router.RouterGroupApp.Pay
 	productRouter := router.RouterGroupApp.Product
+
 	// 如果想要不使用nginx代理前端网页，可以修改 web/.env.production 下的
 	// VUE_APP_BASE_API = /
 	// VUE_APP_BASE_PATH = http://localhost
@@ -83,12 +84,13 @@ func Routers() *gin.Engine {
 		//businessRouter.InitOrderRouter(PrivateGroup)                // 订单路由
 		wechatRouter.InitWechatRouter(PrivateGroup, PublicGroup) // 小程序首页路由
 
-		productRouter.InitOrderRouter(PrivateGroup) // 订单路由
+		productRouter.InitOrderRouter(PrivateGroup, PublicGroup) // 订单路由
 		payRouter.InitPayRouter(PrivateGroup, PublicGroup)
 		wechatRouter.InitFlashRouter(PrivateGroup, PublicGroup)
-		productRouter.InitCouponRouter(PrivateGroup, PublicGroup)  // 优惠券
-		productRouter.InitProductRouter(PrivateGroup, PublicGroup) // 商品
-		businessRouter.InitQrCodeRouter(PrivateGroup, PublicGroup)
+		productRouter.InitCouponRouter(PrivateGroup, PublicGroup)    // 优惠券
+		productRouter.InitProductRouter(PrivateGroup, PublicGroup)   // 商品
+		productRouter.InitLogisticsRouter(PrivateGroup, PublicGroup) // 物流
+		//businessRouter.InitQrCodeRouter(PrivateGroup, PublicGroup)
 		wechatRouter.InitTeamRouter(PrivateGroup)
 
 	}

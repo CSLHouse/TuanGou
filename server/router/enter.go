@@ -1,7 +1,7 @@
 package router
 
 import (
-	"cooller/server/router/business"
+	//"cooller/server/router/business"
 	"cooller/server/router/example"
 	"cooller/server/router/pay"
 	"cooller/server/router/product"
@@ -10,12 +10,12 @@ import (
 )
 
 type RouterGroup struct {
-	System   system.RouterGroup
-	Example  example.RouterGroup
-	Business business.RouterGroup
-	Wechat   wechat.RouterGroup
-	Pay      pay.RouterGroup
-	Product  product.RouterGroup
+	System  system.RouterGroup
+	Example example.RouterGroup
+	//Business business.RouterGroup
+	Wechat  wechat.RouterGroup
+	Pay     pay.RouterGroup
+	Product product.RouterGroup
 }
 
 var RouterGroupApp = new(RouterGroup)

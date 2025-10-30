@@ -12,7 +12,6 @@ import (
 
 	"cooller/server/config"
 
-	wechatPay "github.com/go-pay/gopay/wechat/v3"
 	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"gorm.io/gorm"
@@ -28,7 +27,6 @@ var (
 	GVA_LOG                 *zap.Logger
 	GVA_Timer               timer.Timer = timer.NewTimerTask()
 	GVA_Concurrency_Control             = &singleflight.Group{}
-	GVA_WECHAT_PAY_CLIENT   *wechatPay.ClientV3
 	BlackCache              local_cache.Cache
 	lock                    sync.RWMutex
 )

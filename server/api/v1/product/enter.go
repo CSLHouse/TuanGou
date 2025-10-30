@@ -8,6 +8,7 @@ type ApiGroup struct {
 	CouponApi
 	OrderApi
 	ProductApi
+	LogisticsApi
 }
 
 var (

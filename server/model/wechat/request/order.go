@@ -44,3 +44,13 @@ type OrderNoteInfo struct {
 	OrderId int    `json:"orderId" `
 	Note    string `json:"note" gorm:"not null;comment:备注;"`
 }
+
+type LogisticsInfo struct {
+	ID               int    `json:"id" `
+	LogisticsCompany string `json:"logisticsCompany" `
+	LogisticsSn      string `json:"logisticsSn" `
+}
+
+type UpdateLogisticsRequest struct {
+	LogisticsInfos []LogisticsInfo `json:"logisticsInfos"`
+}

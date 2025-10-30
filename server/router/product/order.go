@@ -8,17 +8,15 @@ import (
 
 type OrderRouter struct{}
 
-func (s *OrderRouter) InitOrderRouter(Router *gin.RouterGroup) (R gin.IRoutes) {
+func (s *OrderRouter) InitOrderRouter(Router *gin.RouterGroup, RouterPub *gin.RouterGroup) {
+	couponPublicRouterWithoutRecord := RouterPub.Group("order")
 	wxOrderRouter := Router.Group("order").Use(middleware.OperationRecord())
 	wxOrderApi := v1.ApiGroupApp.ProductApiGroup.OrderApi
 	{
 		wxOrderRouter.POST("generateConfirmOrder", wxOrderApi.GenerateConfirmOrder)
 		wxOrderRouter.POST("generateOrder", wxOrderApi.GenerateOrder)
-		wxOrderRouter.GET("detail", wxOrderApi.GetOrderDetail)
-		wxOrderRouter.GET("list", wxOrderApi.GetOrderList)
 		wxOrderRouter.POST("paySuccess", wxOrderApi.PaySuccess)
 		wxOrderRouter.POST("cancelOrder", wxOrderApi.CancelOrders)
-		wxOrderRouter.GET("setting", wxOrderApi.GetOrderSetting)
 		wxOrderRouter.POST("settingUpdate", wxOrderApi.UpdateOrderSetting)
 		wxOrderRouter.POST("closeOrders", wxOrderApi.CloseOrders)
 		wxOrderRouter.DELETE("delete", wxOrderApi.DeleteOrders)
@@ -30,9 +28,14 @@ func (s *OrderRouter) InitOrderRouter(Router *gin.RouterGroup) (R gin.IRoutes) {
 		wxOrderRouter.PUT("cart", wxOrderApi.UpdateProductCartQuantity)
 		wxOrderRouter.DELETE("cart", wxOrderApi.DeleteProductCartById)
 		wxOrderRouter.DELETE("cart/clear", wxOrderApi.ClearProductCart)
-		wxOrderRouter.GET("cart/list", wxOrderApi.GetProductCartList)
 		wxOrderRouter.DELETE("carts", wxOrderApi.DeleteProductCartByIds)
 		wxOrderRouter.POST("tmpCart", wxOrderApi.CreateProductTmpCart)
+		wxOrderRouter.PUT("logistics", wxOrderApi.UpdateOrderLogistics)
 	}
-	return wxOrderRouter
+	{
+		couponPublicRouterWithoutRecord.GET("detail", wxOrderApi.GetOrderDetail)
+		couponPublicRouterWithoutRecord.GET("list", wxOrderApi.GetOrderList)
+		couponPublicRouterWithoutRecord.GET("setting", wxOrderApi.GetOrderSetting)
+		couponPublicRouterWithoutRecord.GET("cart/list", wxOrderApi.GetProductCartList)
+	}
 }

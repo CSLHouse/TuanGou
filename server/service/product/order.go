@@ -69,7 +69,7 @@ func (o *OrderService) GetProductTmpCartByIds(userId int, ids []int) (cartItem [
 
 func (o *OrderService) CreateOrder(e *product.Order) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
-	err = db.Create(&e).Error
+	err = db.Debug().Create(&e).Error
 	return err
 }
 
@@ -111,103 +111,33 @@ func (o *OrderService) GetProductOrderListByStatus(searchInfo request.StateInfo)
 	state := searchInfo.State
 	db := global.GVA_DB.Model(&product.Order{})
 
-	var cmdList []interface{}
-	var cmdString string
 	if len(searchInfo.OrderSn) > 0 {
-		cmdList = append(cmdList, strings.TrimSpace(searchInfo.OrderSn))
-		cmdString = "order_sn = ?"
+		db = db.Where("order_sn = ?", strings.TrimSpace(searchInfo.OrderSn))
 	}
 	if len(searchInfo.ReceiverKeyword) > 0 {
-		keyword := "%" + strings.TrimSpace(searchInfo.ReceiverKeyword) + "%"
-		if len(cmdList) >= 1 {
-			cmdList = append(cmdList, keyword)
-			cmdList = append(cmdList, keyword)
-			cmdString += " and receiver_name like ? or receiver_phone like ?"
-		} else {
-			cmdList = append(cmdList, keyword)
-			cmdList = append(cmdList, keyword)
-			cmdString += "receiver_name like ? or receiver_phone like ?"
-		}
+		// 模糊查询需手动拼接%，Gorm会自动处理参数绑定
+		db = db.Where("receiver_name like ? or receiver_phone like ?", "%"+searchInfo.ReceiverKeyword+"%")
 	}
-
 	if searchInfo.OrderType > 0 {
-		if len(cmdList) >= 1 {
-			cmdList = append(cmdList, searchInfo.OrderType-100)
-			cmdString += " and order_type = ?"
-		} else {
-			cmdList = append(cmdList, searchInfo.OrderType-100)
-			cmdString += "order_type = ?"
-		}
+		db = db.Where("order_type = ?", searchInfo.OrderType-100)
 	}
 	if len(searchInfo.CreateTime) > 0 {
 		thatDay := date_conversion.ParseStringDate(searchInfo.CreateTime)
 		nextDay := thatDay.AddDate(0, 0, 1)
 
-		if len(cmdList) >= 1 {
-			cmdList = append(cmdList, thatDay)
-			cmdList = append(cmdList, nextDay)
-			cmdString += " and created_at between ? and ?"
-		} else {
-			cmdList = append(cmdList, thatDay)
-			cmdList = append(cmdList, nextDay)
-			cmdString += "created_at between ? and ?"
-		}
+		db = db.Where("created_at between ? and ?", thatDay, nextDay)
+	}
+	if state >= 0 {
+		db = db.Where("status = ?", state)
 	}
 
-	switch state {
-	case -1:
-		{
-			if len(cmdList) > 0 {
-				err = db.Where(cmdString, cmdList...).Count(&total).Error
-				if err != nil {
-					return list, total, err
-				} else {
-					err = db.Where(cmdString, cmdList...).Limit(limit).Offset(offset).Preload("OrderItemList").Order("id desc").Find(&list).Error
-				}
-			} else {
-				err = db.Count(&total).Error
-				if err != nil {
-					return list, total, err
-				} else {
-					err = db.Limit(limit).Offset(offset).Preload("OrderItemList").Order("id desc").Find(&list).Error
-				}
-			}
-			return list, total, err
-		}
-	case 0, 3, 4:
-		{
-			if len(cmdString) > 0 {
-				cmdString = fmt.Sprintf(" %s and status = %d", cmdString, state)
-			} else {
-				cmdString = fmt.Sprintf("status = %d", state)
-			}
-			err = db.Debug().Where(cmdString, cmdList...).Count(&total).Error
-			if err != nil {
-				return list, total, err
-			} else {
-
-				err = db.Debug().Where(cmdString, cmdList...).Limit(limit).Offset(offset).Preload("OrderItemList").Order("id desc").Find(&list).Error
-			}
-			return list, total, err
-		}
-	case 1, 2:
-		{
-			if len(cmdString) > 0 {
-				cmdString = fmt.Sprintf("%s and status = 1 or status = 2", cmdString)
-			} else {
-				cmdString = "status = 1 or status = 2"
-			}
-			err = db.Where(cmdString, cmdList...).Count(&total).Error
-			if err != nil {
-				return list, total, err
-			} else {
-				err = db.Debug().Where(cmdString, cmdList...).Limit(limit).Offset(offset).Preload("OrderItemList").Order("id desc").Find(&list).Error
-			}
-			return list, total, err
-		}
-	default:
+	err = db.Count(&total).Error
+	if err != nil {
 		return list, total, err
+	} else {
+		err = db.Limit(limit).Offset(offset).Debug().Preload("OrderItemList").Order("id desc").Find(&list).Error
 	}
+	return list, total, err
 }
 
 func (o *OrderService) UpdateOrderStatus(e *wechatReq.PaySuccessRequest, status int) (err error) {
@@ -230,7 +160,7 @@ func (o *OrderService) UpdateOrderStatusByOrderSn(orderSn *string, status int) (
 
 func (o *OrderService) UpdateOrderPaySuccess(id int, prepayId string) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
-	err = db.Debug().Where("id = ?", id).Updates(map[string]interface{}{"prepay_id": prepayId, "status": 1}).Error
+	err = db.Debug().Where("id = ?", id).Updates(map[string]interface{}{"prepay_id": prepayId}).Error
 	return err
 }
 
@@ -314,4 +244,49 @@ func (o *OrderService) GetOrderSetting(id int) (order product.OrderSetting, err 
 func (o *OrderService) UpdateOrderSetting(e *product.OrderSetting) (err error) {
 	err = global.GVA_DB.Save(e).Error
 	return err
+}
+
+func (o *OrderService) UpdateOrderLogistics(infos *wechatReq.UpdateLogisticsRequest, ids []int) (err error) {
+	tx := global.GVA_DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if tx.Error != nil {
+		return err
+	}
+
+	// 3. 构造批量更新SQL（使用CASE WHEN）
+	companyCase := "CASE id " // 物流公司的CASE语句
+	snCase := "CASE id "      // 物流单号的CASE语句
+	args := []interface{}{}   // SQL参数（防止注入）
+
+	for _, info := range infos.LogisticsInfos {
+		// 拼接CASE条件（使用参数化占位符?）
+		companyCase += "WHEN ? THEN ? "
+		snCase += "WHEN ? THEN ? "
+		// 绑定参数（ID、公司名、ID、单号）
+		args = append(args, info.ID, info.LogisticsCompany, info.ID, info.LogisticsSn)
+	}
+	companyCase += "END" // 结束CASE语句
+	snCase += "END"
+
+	// 构造WHERE IN条件（筛选需要更新的ID）
+	inPlaceholders := "(" + strings.Repeat("?,", len(ids)-1) + "?)" // 如 (?,?)
+	for _, id := range ids {
+		args = append(args, id) // 这里int会被隐式转换为interface{}
+	}
+
+	fmt.Println(append([]interface{}{companyCase, snCase}, args...), len(args))
+	// 4. 执行批量更新SQL
+	sql := fmt.Sprintf(`UPDATE oms_order SET logistics_company = %s, logistics_sn = %s WHERE id IN %s`, companyCase, snCase, inPlaceholders)
+	fmt.Println(sql)
+	if err := tx.Debug().Exec(sql, args...).Error; err != nil {
+		tx.Rollback()
+		return fmt.Errorf("批量更新失败: %v", err)
+	}
+
+	return tx.Commit().Error
 }

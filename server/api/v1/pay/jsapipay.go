@@ -137,8 +137,8 @@ type PayApi struct{}
 //	order.SourceType = 1
 //	order.Status = 0
 //	order.OrderType = 0
-//	//order.DeliveryCompany = ""
-//	//order.DeliverySn = ""
+//	//order.LogisticsCompany = ""
+//	//order.LogisticsSn = ""
 //	order.AutoConfirmDay = 7
 //	order.Integration = 0
 //	order.Growth = 0
@@ -160,7 +160,7 @@ type PayApi struct{}
 //	order.UseIntegration = orderReq.UseIntegration
 //	order.PaymentTime = time.Now()
 //
-//	order.DeliveryTime = time.Now()
+//	order.LogisticsTime = time.Now()
 //	order.ReceiveTime = time.Now()
 //	order.CommentTime = time.Now()
 //	order.ModifyTime = time.Now()
