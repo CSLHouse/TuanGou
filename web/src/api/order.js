@@ -101,3 +101,19 @@ export function updateOrderLogistics(data) {
     data:data
   });
 }
+
+export function getOrderDealList(params) {
+  return request({
+    url:'/order/deal/list',
+    method:'get',
+    params:params
+  })
+}
+
+export function updateOrderDealStatus(data) {
+  return request({
+    url:'/order/deal',
+    method:'put',
+    data:data
+  });
+}

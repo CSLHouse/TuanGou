@@ -60,7 +60,7 @@
         <i class="el-icon-tickets"></i>
         <span>数据列表</span>
         <div class="btn-add">
-          <el-badge class="item" :hidden="savingIds.length < 1" :value="savingIds.length" >
+          <el-badge :hidden="savingIds.length < 1" :value="savingIds.length" >
             <el-button
               :style="{ backgroundColor: isChange ? '#4d70ff' : '', color: isChange ? '#fff' : '' }"
               icon="DocumentChecked"
@@ -460,6 +460,22 @@
           })
         },
         handleCompleteOrder(index, row) {
+          if(row.status !== 1){
+            this.$message({
+              message: '只有待付款订单才能完成',
+              type: 'warning',
+              duration: 1000
+            });
+            return;
+          }
+          if(row.status >= 3){
+            this.$message({
+              message: '该订单已完成或关闭，无需重复操作',
+              type: 'warning',
+              duration: 1000
+            });
+            return;
+          }
           updateOrderCompletedStatus({"ids": [row.id]}).then(response=>{
             this.$message({
               message: '更新成功！',
@@ -595,11 +611,6 @@
 
     .edit-container {
       position: relative;
-    }
-
-    .item {
-      margin-top: 10px;
-      margin-right: 40px;
     }
   </style>
   
