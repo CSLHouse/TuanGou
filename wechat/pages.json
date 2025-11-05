@@ -231,6 +231,12 @@
 				}
 			},
 			{
+				"path": "feedback/feedbackList",
+				"style": {
+					"navigationBarTitleText": ""
+				}
+			},
+			{
 				"path": "logistics/logistics",
 				"style": {
 					"navigationBarTitleText": ""

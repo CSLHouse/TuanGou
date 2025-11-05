@@ -9,7 +9,7 @@
 	import {
 		queryLogisticsInfo
 	} from '@/api/order.js';
-	import leeLogistics from '@/components/logistics/logistics.vue'
+	import leeLogistics from '@/subpages/components/logistics/logistics.vue'
 	export default {
 		components: {
 			leeLogistics

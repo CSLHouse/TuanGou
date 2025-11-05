@@ -11,6 +11,7 @@ Vue.use(Vuex)
 const store = new Vuex.Store({
 	state: {
 		hasLogin: false,
+		isRefreshingToken: false,
 		userInfo: {},
 		openId: '',
 		token: "",
@@ -64,6 +65,7 @@ const store = new Vuex.Store({
 		logout(state) {
 			state.hasLogin = false
 			state.hadNickName = false
+			state.isRefreshingToken = false
 			state.userInfo = {}
 			state.token = null
 			uni.removeStorage({
@@ -71,6 +73,9 @@ const store = new Vuex.Store({
 			});
 			uni.removeStorage({
 				key: 'Token'
+			})
+			uni.removeStorage({
+				key: 'TokenTime'
 			})
 		},
 		// setFormOpenId(state, provider) {

@@ -13,17 +13,12 @@
 					<!-- 空白页 -->
 					<empty v-if="orderList==null||orderList.length === 0"></empty>
 
-					<!-- 订单列表 -->
-					<view v-for="(item, index) in orderList" :key="index" class="order-item">
-						<div @click="showOrderDetail(item.id)">
-							<div @click="showOrderDetail(item.id)">
+					<!-- 可售后申请列表 -->
+					<view v-if="tabCurrentIndex == 0">
+						<view v-for="(item, index) in orderList" :key="index" class="order-item">
+							<div>
 								<view class="i-top b-b">
 									<text class="time">{{item.CreatedAt | formatDateTime}}</text>
-									<text class="state"
-										:style="{color: '#fa436a'}">{{item.status | formatStatus}}</text>
-									<text v-if="item.status===3||item.status===4"
-										class="del-btn yticon icon-iconfontshanchu1"
-										@click="deleteOrder(item.id)"></text>
 								</view>
 								<view class="goods-box-single" v-for="(orderItem, itemIndex) in item.orderItemList"
 									:key="itemIndex">
@@ -34,33 +29,22 @@
 											x{{orderItem.quantity}}</text>
 										<text class="price">{{orderItem.price}}</text>
 									</view>
+									<text v-if="checkDateExpired(item.CreatedAt)" class="explain">已过售后期</text>
+									<view class="explain" v-else>
+										<text v-if="orderItem.status == 1" class="explain">售后处理中</text>
+										<button class="action-btn" v-else
+											@click="afterSale(orderItem.id, index)">申请售后</button>
+									</view>
 								</view>
+
 							</div>
-
-							<view class="price-box">
-								共
-								<text class="num">{{calcTotalQuantity(item)}}</text>
-								件商品 实付款
-								<text class="price">{{item.payAmount}}</text>
-							</view>
-						</div>
-						<view class="action-box b-t" v-if="item.status == 0">
-							<button class="action-btn" @click="cancelOrder(item.id)">取消订单</button>
-							<button class="action-btn recom" @click="payOrder(item.id)">立即付款</button>
 						</view>
-						<view class="action-box b-t" v-if="item.status == 2">
-							<button class="action-btn" @click="handleShowLogistics(item.id)">查看物流</button>
-							<button class="action-btn recom" @click="receiveOrder(item.id)">确认收货</button>
-						</view>
-						<view class="action-box b-t" v-if="item.status == 3">
-							<button class="action-btn recom">评价商品</button>
-							<button class="action-btn" @click="afterSale(item.id, index)">申请售后</button>
-						</view>
-
+						<uni-load-more :status="loadingType"></uni-load-more>
 					</view>
-
-					<uni-load-more :status="loadingType"></uni-load-more>
-
+					<!-- 处理中 -->
+					<view v-if="tabCurrentIndex == 1">
+						<text>功能开发中</text>
+					</view>
 				</scroll-view>
 			</swiper-item>
 		</swiper>
@@ -75,9 +59,7 @@
 	} from '@/utils/date';
 	import {
 		fetchOrderList,
-		cancelUserOrder,
-		confirmReceiveOrder,
-		deleteUserOrder
+		fetchOrderItemList,
 	} from '@/api/order.js';
 	export default {
 		components: {
@@ -87,7 +69,9 @@
 		data() {
 			return {
 				tabCurrentIndex: 0,
+				orderId: 0,
 				orderParam: {
+					orderId: 0,
 					state: -1,
 					page: 1,
 					pageSize: 5
@@ -95,24 +79,20 @@
 				orderList: [],
 				loadingType: 'more',
 				navList: [{
-						state: -1,
-						text: '全部'
+						state: 0,
+						text: '售后申请'
 					},
 					{
-						state: 0,
-						text: '待付款'
+						state: 1,
+						text: '处理中'
 					},
 					{
 						state: 2,
-						text: '待收货'
+						text: '待评价'
 					},
 					{
 						state: 3,
-						text: '已完成'
-					},
-					{
-						state: 4,
-						text: '已取消'
+						text: '申请记录'
 					}
 				],
 			};
@@ -122,16 +102,9 @@
 			 * 修复app端点击除全部订单外的按钮进入时不加载数据的问题
 			 * 替换onLoad下代码即可
 			 */
-			this.tabCurrentIndex = +options.state;
-			// #ifndef MP
+			this.tabCurrentIndex = +options.state || 0;
+			this.orderId = options.orderId || 0;
 			this.loadData()
-			// #endif
-			// #ifdef MP
-			if (options.state == 0) {
-				this.loadData()
-			}
-			// #endif
-
 		},
 		filters: {
 			formatStatus(status) {
@@ -156,9 +129,8 @@
 				return statusTip;
 			},
 			formatProductAttr(jsonAttr) {
-				// console.log("--[formatProductAttr]-jsonAttr:", jsonAttr)
 				let attrArr = JSON.parse(jsonAttr);
-				// let attrArr = jsonAttr;
+				// console.log("--[formatProductAttr]-attrArr:", attrArr)
 				let attrStr = '';
 				for (let attr of attrArr) {
 					attrStr += attr.key;
@@ -166,6 +138,7 @@
 					attrStr += attr.value;
 					attrStr += ";";
 				}
+				// console.log("--[formatProductAttr]-attrStr:", attrStr)
 				return attrStr
 			},
 			formatDateTime(time) {
@@ -185,14 +158,14 @@
 					this.orderParam.page++;
 				}
 				//这里是将订单挂载到tab列表下
-				let index = this.tabCurrentIndex;
-				let navItem = this.navList[index];
+				let navItem = this.navList[this.tabCurrentIndex];
 				let state = navItem.state;
 				if (this.loadingType === 'loading') {
 					//防止重复加载
 					return;
 				}
 				this.orderParam.state = state;
+				this.orderParam.orderId = this.orderId;
 				this.loadingType = 'loading';
 				fetchOrderList(this.orderParam).then(response => {
 					console.log("--fetchOrderList--", response)
@@ -204,7 +177,11 @@
 						} else {
 							if (list != null && list.length > 0) {
 								this.orderList = this.orderList.concat(list);
-								this.loadingType = 'more';
+								if (list.length < 5) {
+									this.loadingType = 'noMore';
+								} else {
+									this.loadingType = 'more';
+								}
 							} else {
 								this.orderParam.page--;
 								this.loadingType = 'noMore';
@@ -222,93 +199,6 @@
 			tabClick(index) {
 				this.tabCurrentIndex = index;
 			},
-			//删除订单
-			deleteOrder(orderId) {
-				let superThis = this;
-				uni.showModal({
-					title: '提示',
-					content: '是否要删除该订单？',
-					success: function(res) {
-						if (res.confirm) {
-							uni.showLoading({
-								title: '请稍后'
-							})
-							deleteUserOrder({
-								orderId: orderId
-							}).then(response => {
-								uni.hideLoading();
-								superThis.loadData();
-							});
-						} else if (res.cancel) {
-							// console.log('用户点击取消');
-						}
-					}
-				});
-			},
-			//取消订单
-			cancelOrder(orderId) {
-				let superThis = this;
-				uni.showModal({
-					title: '提示',
-					content: '是否要取消该订单？',
-					success: function(res) {
-						if (res.confirm) {
-							uni.showLoading({
-								title: '请稍后'
-							})
-							cancelUserOrder({
-								id: orderId
-							}).then(response => {
-								uni.hideLoading();
-								uni.navigateBack({
-									delta: 1
-								});
-
-							});
-						} else if (res.cancel) {
-							console.log('用户点击取消');
-						}
-					}
-				});
-			},
-			//支付订单
-			payOrder(orderId) {
-				uni.redirectTo({
-					url: `/subpages/order/orderDetail?orderId=${orderId}`
-				});
-			},
-			//确认收货
-			receiveOrder(orderId) {
-				let superThis = this;
-				uni.showModal({
-					title: '提示',
-					content: '是否要确认收货？',
-					success: function(res) {
-						if (res.confirm) {
-							uni.showLoading({
-								title: '请稍后'
-							})
-							confirmReceiveOrder({
-								orderId: orderId
-							}).then(response => {
-								uni.hideLoading();
-								uni.navigateBack({
-									delta: 1
-								});
-
-							});
-						} else if (res.cancel) {
-							// console.log('用户点击取消');
-						}
-					}
-				});
-			},
-			//查看订单详情
-			showOrderDetail(orderId) {
-				uni.navigateTo({
-					url: `/subpages/order/orderDetail?orderId=${orderId}`
-				})
-			},
 			//计算商品总数量
 			calcTotalQuantity(order) {
 				let totalQuantity = 0;
@@ -323,13 +213,22 @@
 			async afterSale(orderId, index) {
 				console.log("--------afterSale----")
 				uni.navigateTo({
-					url: `/subpages/feedback/feedbackList?orderId=` + orderId + "&index=" + index
+					url: `/subpages/feedback/feedback?orderItemId=` + orderItemId + "&index=" + index
 				})
 			},
-			handleShowLogistics(orderId) {
-				uni.navigateTo({
-					url: `/subpages/logistics/logistics?orderId=${orderId}`
-				})
+			checkDateExpired(time) {
+				if (time == null || time === '') {
+					return true
+				}
+				let date = new Date(time);
+				let now = new Date();
+				let result = now.getTime() - date.getTime()
+				let n = Math.floor(result / (24 * 3600 * 1000));
+				console.log('---------相差天数：', n)
+				if (n >= 7) {
+					return true
+				}
+				return false
 			}
 		},
 	}
@@ -689,5 +588,11 @@
 		100% {
 			opacity: .2
 		}
+	}
+
+	.explain {
+		display: flex;
+		margin: 8% 20px;
+		font-size: 10px;
 	}
 </style>
