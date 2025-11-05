@@ -10,16 +10,18 @@ import (
 	payRequest "cooller/server/model/pay/request"
 	payRes "cooller/server/model/pay/response"
 	"cooller/server/model/product"
-	wechatReq "cooller/server/model/wechat/request"
-	wechatRes "cooller/server/model/wechat/response"
+	productReq "cooller/server/model/product/request"
+	productRes "cooller/server/model/product/response"
 	"cooller/server/utils"
+	"encoding/json"
 	"fmt"
-	"github.com/ChangSZ/golib/mathutil"
-	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/ChangSZ/golib/mathutil"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type OrderApi struct{}
@@ -85,7 +87,7 @@ func (e *OrderApi) GenerateConfirmOrder(c *gin.Context) {
 	// 计算总金额、活动优惠、应付金额
 	calcAmount := e.CalcCartAmount(cartPromotionItemList)
 
-	var order wechatRes.GenerateOrderResModel
+	var order productRes.GenerateOrderResModel
 	order.CartPromotionItemList = cartPromotionItemList
 	order.MemberReceiveAddressList = addressList
 	order.CalcAmount = *calcAmount
@@ -95,8 +97,8 @@ func (e *OrderApi) GenerateConfirmOrder(c *gin.Context) {
 }
 
 // CalcCartAmount 计算购物车中商品的价格
-func (e *OrderApi) CalcCartAmount(cartPromotionItemList []*product.OrderItem) *wechatRes.CalcAmount {
-	calcAmount := &wechatRes.CalcAmount{}
+func (e *OrderApi) CalcCartAmount(cartPromotionItemList []*product.OrderItem) *productRes.CalcAmount {
+	calcAmount := &productRes.CalcAmount{}
 	var totalAmount float32
 	var promotionAmount float32
 	for _, cartPromotionItem := range cartPromotionItemList {
@@ -111,7 +113,7 @@ func (e *OrderApi) CalcCartAmount(cartPromotionItemList []*product.OrderItem) *w
 
 // GenerateOrder
 func (e *OrderApi) GenerateOrder(c *gin.Context) {
-	var orderReq wechatReq.OrderCreateRequest
+	var orderReq productReq.OrderCreateRequest
 	err := c.ShouldBindJSON(&orderReq)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -362,7 +364,7 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 	order.OrderItemList = cartPromotionItemList
 	for _, orderItem := range order.OrderItemList {
 		//orderItem.OrderId = order.ID
-		orderItem.OrderSn = order.OrderSn
+		orderItem.OrderSn = e.GenerateOrderSn(order) //TODO: 唯一性有待优化
 	}
 	err = orderService.CreateOrder(&order)
 	if err != nil {
@@ -386,14 +388,14 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 	}
 
 	//删除购物车中的下单商品
-	//orderIdList := make([]int, 0)
-	//orderIdList = append(orderIdList, order.ID)
-	//_, err = orderService.DeleteManyOrder(orderIdList)
-	//if err != nil {
-	//	global.GVA_LOG.Error("更新订单数据失败!", zap.Error(err))
-	//	response.FailWithMessage("更新订单数据失败", c)
-	//	return
-	//}
+	if orderReq.BuyType == 2 {
+		err = productService.DeleteProductCartByIds(userId, orderReq.Ids)
+		if err != nil {
+			global.GVA_LOG.Error("删除购物车失败!", zap.Error(err))
+			response.FailWithMessage("删除购物车失败", c)
+			return
+		}
+	}
 
 	payReq := e.buildPayReq(&order, orderReq, orderDescription)
 	res, _, err := jspaymentService.PrepayWithRequestPayment(payReq)
@@ -423,7 +425,7 @@ func (e *OrderApi) isPrepayExpired(paymentTime time.Time) bool {
 }
 
 // 辅助函数：构建支付请求参数
-func (e *OrderApi) buildPayReq(order *product.Order, orderReq wechatReq.OrderCreateRequest, orderDescription string) payRequest.PrepayRequest {
+func (e *OrderApi) buildPayReq(order *product.Order, orderReq productReq.OrderCreateRequest, orderDescription string) payRequest.PrepayRequest {
 	var payReq payRequest.PrepayRequest
 	payReq.Appid = utils.String(orderReq.AppId)
 	payReq.Mchid = utils.String(consts.MachID)
@@ -517,7 +519,6 @@ func (e *OrderApi) ListPromotion(cartItemList []*product.CartCommonItem) (cartPr
 
 		cartPromotionItem.ProductSkuCode = cart.SkuStock.SkuCode
 		cartPromotionItem.MemberNickname = ""
-		cartPromotionItem.DeleteStatus = 0
 		cartPromotionItem.ProductBrand = cart.Product.BrandName
 		cartPromotionItem.ProductSN = cart.Product.ProductSN
 		cartPromotionItem.ProductAttr = cart.SkuStock.SpData
@@ -682,7 +683,6 @@ func (e *OrderApi) GenerateOrderSn(order product.Order) string {
 	sb.WriteString(fmt.Sprintf("%02d", order.PayType))
 	incrementStr := fmt.Sprintf("%06d", increment.Val())
 	fmt.Println(incrementStr)
-	global.GVA_LOG.Error("---Redis Incr incrementStr:" + incrementStr)
 	// 限制自增ID最大20字节，超过则取后20位（保证总长度≤32）
 	if len(incrementStr) > 6 {
 		if len(incrementStr) > 20 {
@@ -702,7 +702,7 @@ type productKey struct {
 }
 
 // CheckDuplicateUnpaidOrder 检查是否存在重复的未支付订单
-func (e *OrderApi) CheckDuplicateUnpaidOrder(userId int, orderReq wechatReq.OrderCreateRequest, currentProducts []productKey) (*product.Order, error) {
+func (e *OrderApi) CheckDuplicateUnpaidOrder(userId int, orderReq productReq.OrderCreateRequest, currentProducts []productKey) (*product.Order, error) {
 	// 1. 先查询用户的未支付订单
 	var unpaidOrders []*product.Order
 	db := global.GVA_DB.Where("user_id = ? AND status = 0", userId)
@@ -781,7 +781,7 @@ func (e *OrderApi) GetOrderDetail(c *gin.Context) {
 }
 
 func (e *OrderApi) GetOrderList(c *gin.Context) {
-	var stateInfo request.StateInfo
+	var stateInfo productReq.SearchInfo
 	err := c.ShouldBindQuery(&stateInfo)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -806,8 +806,34 @@ func (e *OrderApi) GetOrderList(c *gin.Context) {
 	}, "获取成功", c)
 }
 
+func (e *OrderApi) GetOrderItemList(c *gin.Context) {
+	var stateInfo productReq.SearchInfo
+	err := c.ShouldBindQuery(&stateInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	err = utils.Verify(stateInfo, utils.StateInfoVerify)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	orderList, total, err := orderService.GetProductOrderItemListByStatus(stateInfo)
+	if err != nil {
+		global.GVA_LOG.Error("获取订单数据失败!", zap.Error(err))
+		response.FailWithMessage("获取订单数据失败", c)
+		return
+	}
+	response.OkWithDetailed(response.PageResult{
+		List:     orderList,
+		Total:    total,
+		Page:     stateInfo.Page,
+		PageSize: stateInfo.PageSize,
+	}, "获取成功", c)
+}
+
 func (e *OrderApi) PaySuccess(c *gin.Context) {
-	var paySuccess wechatReq.PaySuccessRequest
+	var paySuccess productReq.PaySuccessRequest
 	err := c.ShouldBindJSON(&paySuccess)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -901,7 +927,7 @@ func (e *OrderApi) DeleteOrders(c *gin.Context) {
 }
 
 func (e *OrderApi) UpdateOrderReceiverInfo(c *gin.Context) {
-	var address wechatReq.OrderReceiveAddress
+	var address productReq.OrderReceiveAddress
 	err := c.ShouldBindJSON(&address)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -917,7 +943,7 @@ func (e *OrderApi) UpdateOrderReceiverInfo(c *gin.Context) {
 }
 
 func (e *OrderApi) UpdateOrderMoneyInfo(c *gin.Context) {
-	var info wechatReq.OrderMoneyInfo
+	var info productReq.OrderMoneyInfo
 	err := c.ShouldBindJSON(&info)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -933,7 +959,7 @@ func (e *OrderApi) UpdateOrderMoneyInfo(c *gin.Context) {
 }
 
 func (e *OrderApi) UpdateOrderNote(c *gin.Context) {
-	var info wechatReq.OrderNoteInfo
+	var info productReq.OrderNoteInfo
 	err := c.ShouldBindJSON(&info)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -1114,7 +1140,7 @@ func (e *OrderApi) CreateProductTmpCart(c *gin.Context) {
 }
 
 func (e *OrderApi) UpdateOrderLogistics(c *gin.Context) {
-	var info wechatReq.UpdateLogisticsRequest
+	var info productReq.UpdateLogisticsRequest
 	err := c.ShouldBindJSON(&info)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -1134,6 +1160,141 @@ func (e *OrderApi) UpdateOrderLogistics(c *gin.Context) {
 	}
 
 	err = orderService.UpdateOrderLogistics(&info, ids)
+	if err != nil {
+		global.GVA_LOG.Error("更新失败!", zap.Error(err))
+		response.FailWithMessage("更新失败", c)
+		return
+	}
+	response.OkWithMessage("更新成功", c)
+}
+
+func (e *OrderApi) UploadFileWx(c *gin.Context) {
+	fmt.Println("---OssType:", global.GVA_CONFIG.System.OssType)
+	var file product.AfterSalesUpload
+	noSave := c.DefaultQuery("noSave", "0")
+	_, header, err := c.Request.FormFile("file")
+	if err != nil {
+		global.GVA_LOG.Error("接收文件失败!", zap.Error(err))
+		response.FailWithMessage("接收文件失败", c)
+		return
+	}
+	userId := utils.GetUserID(c)
+
+	file, err = orderService.UploadFile(header, noSave, userId) // 文件上传后拿到文件路径
+	if err != nil {
+		global.GVA_LOG.Error("修改数据库链接失败!", zap.Error(err))
+		response.FailWithMessage("修改数据库链接失败", c)
+		return
+	}
+	response.OkWithDetailed(response.ItemId{Id: file.ID}, "上传成功", c)
+}
+
+// DealOrder Images:存储的是图片id的字符串
+func (e *OrderApi) DealOrder(c *gin.Context) {
+	var info productReq.OrderDealRequest
+	err := c.ShouldBindJSON(&info)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+
+	userId := utils.GetUserID(c)
+	//imagesJson, err := json.Marshal(info.Images)
+	//if err != nil {
+	//	panic(err)
+	//}
+	//imagesStr := string(imagesJson)
+	orderItem, err := orderService.GetProductOrderItemById(info.OrderItemId)
+	if err != nil {
+		global.GVA_LOG.Error("获取OrderItem失败!", zap.Error(err))
+		response.FailWithMessage("获取OrderItem失败!", c)
+		return
+	}
+	orderApply := product.AfterSalesApply{
+		UserId:      userId,
+		OrderItemId: info.OrderItemId,
+		Content:     info.Content,
+		Contact:     info.Contact,
+		RealAmount:  orderItem.RealAmount,
+		Images:      info.Images,
+		Status:      0,
+	}
+	err = orderService.CreateDealOrderApply(&orderApply)
+	if err != nil {
+		global.GVA_LOG.Error("创建订单售后申请失败!", zap.Error(err))
+		response.FailWithMessage("创建订单售后申请失败", c)
+		return
+	}
+	err = orderService.UpdateOrderAfterSalesStatusById(info.OrderItemId, 1)
+	if err != nil {
+		global.GVA_LOG.Error("修改订单是否售后状态失败!", zap.Error(err))
+		response.FailWithMessage("修改订单是否售后状态失败", c)
+		return
+	}
+	response.OkWithMessage("创建订单售后申请成功", c)
+}
+
+type imageIdsList struct {
+	ImageIds []int `json:"imageIds"`
+}
+
+func (e *OrderApi) GetDealOrderList(c *gin.Context) {
+	var pageInfo productReq.OrderDealSearchRequest
+	err := c.ShouldBindQuery(&pageInfo)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	err = utils.Verify(pageInfo, utils.PageInfoVerify)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	list, total, err := orderService.GetDealOrderList(pageInfo)
+	if err != nil {
+		global.GVA_LOG.Error("获取失败!", zap.Error(err))
+		response.FailWithMessage("获取失败"+err.Error(), c)
+		return
+	}
+
+	for _, item := range list {
+		var imageIds imageIdsList
+		err = json.Unmarshal([]byte(item.Images), &imageIds.ImageIds)
+		if err != nil {
+			global.GVA_LOG.Error("图片字符串组合json转换失败", zap.Error(err))
+			response.FailWithMessage("图片字符串组合json转换失败"+err.Error(), c)
+		}
+		if len(imageIds.ImageIds) > 0 {
+			images, err := orderService.GetOrderDealUploadImages(imageIds.ImageIds)
+			if err != nil {
+				global.GVA_LOG.Error("获取售后图片失败", zap.Error(err))
+				response.FailWithMessage("获取售后图片失败"+err.Error(), c)
+			}
+			for _, image := range images {
+				item.ImagesList = append(item.ImagesList, image.Url)
+			}
+		}
+	}
+	response.OkWithDetailed(response.PageResult{
+		List:     list,
+		Total:    total,
+		Page:     pageInfo.Page,
+		PageSize: pageInfo.PageSize,
+	}, "获取成功", c)
+}
+
+func (e *OrderApi) UpdateDealOrder(c *gin.Context) {
+	var info productReq.UpdateDealOrderRequest
+	err := c.ShouldBindJSON(&info)
+	if err != nil {
+		response.FailWithMessage(err.Error(), c)
+		return
+	}
+	if info.DealId < 1 || info.OrderItemId < 1 {
+		global.GVA_LOG.Error("更新售后申请参数失败!", zap.Error(err))
+		response.FailWithMessage("更新更新售后申请参数失败", c)
+	}
+	err = orderService.UpdateDealOrderSynchronous(info)
 	if err != nil {
 		global.GVA_LOG.Error("更新失败!", zap.Error(err))
 		response.FailWithMessage("更新失败", c)

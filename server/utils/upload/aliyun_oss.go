@@ -12,7 +12,8 @@ import (
 
 type AliyunOSS struct{}
 
-func (*AliyunOSS) UploadFile(file *multipart.FileHeader, userId int) (string, string, error) {
+// channel:上传的渠道，0-web管理端 1-wechat-小程序或app
+func (*AliyunOSS) UploadFile(file *multipart.FileHeader, userId int, channel int) (string, string, error) {
 	bucket, err := NewBucket()
 	if err != nil {
 		global.GVA_LOG.Error("function AliyunOSS.NewBucket() Failed", zap.Any("err", err.Error()))
@@ -28,8 +29,13 @@ func (*AliyunOSS) UploadFile(file *multipart.FileHeader, userId int) (string, st
 	defer f.Close() // 创建文件 defer 关闭
 	// 上传阿里云路径 文件名格式 自己可以改 建议保证唯一性
 	// yunFileTmpPath := filepath.Join("uploads", time.Now().Format("2006-01-02")) + "/" + file.Filename
-	yunFileTmpPath := global.GVA_CONFIG.AliyunOSS.BasePath + "/" + strconv.Itoa(userId) + "/" + file.Filename
-
+	yunFileTmpPath := ""
+	if channel == 1 {
+		yunFileTmpPath += "wechat"
+	} else {
+		yunFileTmpPath += global.GVA_CONFIG.AliyunOSS.BasePath
+	}
+	yunFileTmpPath += "/" + strconv.Itoa(userId) + "/" + file.Filename
 	// 上传文件流。
 	err = bucket.PutObject(yunFileTmpPath, f)
 	if err != nil {
@@ -37,7 +43,7 @@ func (*AliyunOSS) UploadFile(file *multipart.FileHeader, userId int) (string, st
 		return "", "", errors.New("function formUploader.Put() Failed, err:" + err.Error())
 	}
 
-	return global.GVA_CONFIG.AliyunOSS.BucketUrl + "/" + yunFileTmpPath, yunFileTmpPath, nil
+	return global.GVA_CONFIG.AliyunOSS.BucketUrl + "/" + yunFileTmpPath, file.Filename, nil
 }
 
 func (*AliyunOSS) DeleteFile(key string) error {

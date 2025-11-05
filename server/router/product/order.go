@@ -3,6 +3,7 @@ package product
 import (
 	v1 "cooller/server/api/v1"
 	"cooller/server/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,11 +32,17 @@ func (s *OrderRouter) InitOrderRouter(Router *gin.RouterGroup, RouterPub *gin.Ro
 		wxOrderRouter.DELETE("carts", wxOrderApi.DeleteProductCartByIds)
 		wxOrderRouter.POST("tmpCart", wxOrderApi.CreateProductTmpCart)
 		wxOrderRouter.PUT("logistics", wxOrderApi.UpdateOrderLogistics)
+		wxOrderRouter.PUT("deal", wxOrderApi.UpdateDealOrder)
 	}
 	{
 		couponPublicRouterWithoutRecord.GET("detail", wxOrderApi.GetOrderDetail)
 		couponPublicRouterWithoutRecord.GET("list", wxOrderApi.GetOrderList)
+		couponPublicRouterWithoutRecord.GET("item/list", wxOrderApi.GetOrderItemList)
 		couponPublicRouterWithoutRecord.GET("setting", wxOrderApi.GetOrderSetting)
 		couponPublicRouterWithoutRecord.GET("cart/list", wxOrderApi.GetProductCartList)
+		couponPublicRouterWithoutRecord.POST("upload/file", wxOrderApi.UploadFileWx) // 微信端上传
+		//couponPublicRouterWithoutRecord.POST("upload/file", wxOrderApi.UploadFile)      // 管理端上传
+		couponPublicRouterWithoutRecord.POST("deal", wxOrderApi.DealOrder) // 处理订单
+		couponPublicRouterWithoutRecord.GET("deal/list", wxOrderApi.GetDealOrderList)
 	}
 }

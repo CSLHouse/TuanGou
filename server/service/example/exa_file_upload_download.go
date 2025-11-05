@@ -139,7 +139,7 @@ func (e *FileUploadAndDownloadService) UploadFile(header *multipart.FileHeader, 
 	fileName := uuid.String()
 	header.Filename = fmt.Sprintf("%s.%s", fileName, tag)
 	oss := upload.NewOss()
-	filePath, key, uploadErr := oss.UploadFile(header, userId)
+	filePath, key, uploadErr := oss.UploadFile(header, userId, 0)
 	if uploadErr != nil {
 		panic(err)
 	}

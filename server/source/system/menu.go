@@ -4,6 +4,7 @@ import (
 	"context"
 	. "cooller/server/model/system"
 	"cooller/server/service/system"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -79,6 +80,7 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 0, Hidden: false, ParentId: "14", Path: "orderList", Name: "orderList", Component: "view/orderManage/orderList/orderList.vue", Sort: 1, Meta: Meta{Title: "订单列表", Icon: "Collection"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "14", Path: "orderSetting", Name: "orderSetting", Component: "view/orderManage/orderSetting/orderSetting.vue", Sort: 2, Meta: Meta{Title: "订单设置", Icon: "Reading"}},
 		{MenuLevel: 0, Hidden: true, ParentId: "14", Path: "orderDetail", Name: "orderDetail", Component: "view/orderManage/orderDetail/orderDetail.vue", Sort: 3, Meta: Meta{Title: "订单详情", Icon: "Reading"}},
+		{MenuLevel: 0, Hidden: true, ParentId: "14", Path: "afterSales", Name: "afterSales", Component: "view/orderManage/afterSales/afterSales.vue", Sort: 4, Meta: Meta{Title: "售后管理", Icon: "Ticket"}},
 
 		{MenuLevel: 0, Hidden: false, ParentId: "0", Path: "product", Name: "Product", Component: "view/product/index.vue", Sort: 6, Meta: Meta{Title: "商品", Icon: "Goods"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "18", Path: "list", Name: "list", Component: "view/product/list/index.vue", Sort: 1, Meta: Meta{Title: "商品列表", Icon: "Box"}},
@@ -88,7 +90,7 @@ func (i *initMenu) InitializeData(ctx context.Context) (next context.Context, er
 		{MenuLevel: 0, Hidden: false, ParentId: "18", Path: "brand", Name: "Brand", Component: "view/product/brand/Brand.vue", Sort: 5, Meta: Meta{Title: "品牌管理", Icon: "Medal"}},
 		{MenuLevel: 0, Hidden: true, ParentId: "18", Path: "attribute", Name: "Attribute", Component: "view/product/attribute/Attribute.vue", Sort: 6, Meta: Meta{Title: "商品属性参数", Icon: "Medal"}},
 		{MenuLevel: 0, Hidden: true, ParentId: "18", Path: "update", Name: "updateProduct", Component: "view/product/update/update.vue", Sort: 7, Meta: Meta{Title: "修改商品", Icon: "Sell"}},
-
+		
 		{MenuLevel: 0, Hidden: false, ParentId: "0", Path: "marketing", Name: "Marketing", Component: "view/marketing/index.vue", Sort: 7, Meta: Meta{Title: "营销", Icon: "Van"}},
 		{MenuLevel: 0, Hidden: false, ParentId: "26", Path: "flashPromotion", Name: "FlashPromotion", Component: "view/marketing/flashPromotion/index.vue", Sort: 1, Meta: Meta{Title: "秒杀活动列表", Icon: "Clock"}},
 		{MenuLevel: 0, Hidden: true, ParentId: "26", Path: "productRelation", Name: "productRelation", Component: "view/marketing/flashPromotion/productRelationList.vue", Sort: 2, Meta: Meta{Title: "秒杀商品列表", Icon: "Present"}},

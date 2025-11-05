@@ -26,7 +26,7 @@ type Local struct{}
 //@param: file *multipart.FileHeader
 //@return: string, string, error
 
-func (*Local) UploadFile(file *multipart.FileHeader, userId int) (string, string, error) {
+func (*Local) UploadFile(file *multipart.FileHeader, userId int, channel int) (string, string, error) {
 	// 读取文件后缀
 	ext := path.Ext(file.Filename)
 	// 读取文件名并加密

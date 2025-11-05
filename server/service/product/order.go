@@ -4,11 +4,16 @@ import (
 	"cooller/server/global"
 	"cooller/server/model/common/request"
 	"cooller/server/model/product"
-	wechatReq "cooller/server/model/wechat/request"
+	productReq "cooller/server/model/product/request"
 	date_conversion "cooller/server/utils/timer"
+	"cooller/server/utils/upload"
 	"fmt"
-	"gorm.io/gorm"
+	"mime/multipart"
 	"strings"
+
+	"github.com/bwmarrin/snowflake"
+	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
 type OrderService struct{}
@@ -92,6 +97,12 @@ func (o *OrderService) GetProductOrderById(id int) (order product.Order, err err
 	return order, err
 }
 
+func (o *OrderService) GetProductOrderItemById(id int) (orderItem product.OrderItem, err error) {
+	db := global.GVA_DB.Model(&product.OrderItem{})
+	db.Debug().Where("id = ?", id).First(&orderItem)
+	return orderItem, err
+}
+
 func (o *OrderService) GetProductOrderList(info request.PageInfo) (list []product.Order, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
@@ -105,12 +116,15 @@ func (o *OrderService) GetProductOrderList(info request.PageInfo) (list []produc
 	return list, total, err
 }
 
-func (o *OrderService) GetProductOrderListByStatus(searchInfo request.StateInfo) (list []product.Order, total int64, err error) {
+func (o *OrderService) GetProductOrderListByStatus(searchInfo productReq.SearchInfo) (list []product.Order, total int64, err error) {
 	limit := searchInfo.PageSize
 	offset := searchInfo.PageSize * (searchInfo.Page - 1)
 	state := searchInfo.State
 	db := global.GVA_DB.Model(&product.Order{})
 
+	if searchInfo.OrderId > 0 {
+		db = db.Where("id = ?", searchInfo.OrderId)
+	}
 	if len(searchInfo.OrderSn) > 0 {
 		db = db.Where("order_sn = ?", strings.TrimSpace(searchInfo.OrderSn))
 	}
@@ -140,7 +154,33 @@ func (o *OrderService) GetProductOrderListByStatus(searchInfo request.StateInfo)
 	return list, total, err
 }
 
-func (o *OrderService) UpdateOrderStatus(e *wechatReq.PaySuccessRequest, status int) (err error) {
+func (o *OrderService) GetProductOrderItemListByStatus(searchInfo productReq.SearchInfo) (list []product.OrderItem, total int64, err error) {
+	limit := searchInfo.PageSize
+	offset := searchInfo.PageSize * (searchInfo.Page - 1)
+	state := searchInfo.State
+	db := global.GVA_DB.Model(&product.OrderItem{})
+
+	if searchInfo.OrderId > 0 {
+		db = db.Where("order_id = ?", searchInfo.OrderId)
+	}
+	if len(searchInfo.OrderSn) > 0 {
+		db = db.Where("order_sn = ?", strings.TrimSpace(searchInfo.OrderSn))
+	}
+
+	if state >= 0 {
+		db = db.Where("status = ?", state)
+	}
+
+	err = db.Count(&total).Error
+	if err != nil {
+		return list, total, err
+	} else {
+		err = db.Limit(limit).Offset(offset).Debug().Order("id desc").Find(&list).Error
+	}
+	return list, total, err
+}
+
+func (o *OrderService) UpdateOrderStatus(e *productReq.PaySuccessRequest, status int) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Debug().Where("id = ?", e.OrderId).Updates(map[string]interface{}{"pay_type": e.PayType, "status": status}).Error
 	return err
@@ -148,6 +188,18 @@ func (o *OrderService) UpdateOrderStatus(e *wechatReq.PaySuccessRequest, status 
 
 func (o *OrderService) UpdateOrderStatusById(orderId int, status int) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
+	err = db.Debug().Where("id = ?", orderId).UpdateColumn("status", status).Error
+	return err
+}
+
+func (o *OrderService) UpdateOrderAfterSalesStatusById(orderId int, status int) (err error) {
+	db := global.GVA_DB.Model(&product.OrderItem{})
+	err = db.Debug().Where("id = ?", orderId).UpdateColumn("status", status).Error
+	return err
+}
+
+func (o *OrderService) UpdateOrderItemStatusById(orderId int, status int) (err error) {
+	db := global.GVA_DB.Model(&product.OrderItem{})
 	err = db.Debug().Where("id = ?", orderId).UpdateColumn("status", status).Error
 	return err
 }
@@ -201,7 +253,7 @@ func (o *OrderService) UpdateManyOrderStatus(ids []int, status int) (err error) 
 	return err
 }
 
-func (o *OrderService) UpdateOrderReceiverInfo(e *wechatReq.OrderReceiveAddress) (err error) {
+func (o *OrderService) UpdateOrderReceiverInfo(e *productReq.OrderReceiveAddress) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Select("receiver_name", "receiver_phone", "receiver_post_code", "receiver_detail_address", "receiver_province", "receiver_city", "receiver_region").
 		Where("id=?", e.OrderId).
@@ -217,13 +269,13 @@ func (o *OrderService) UpdateOrderReceiverInfo(e *wechatReq.OrderReceiveAddress)
 	return err
 }
 
-func (o *OrderService) UpdateOrderMoneyInfo(info *wechatReq.OrderMoneyInfo) (err error) {
+func (o *OrderService) UpdateOrderMoneyInfo(info *productReq.OrderMoneyInfo) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Where("id = ?", info.OrderId).UpdateColumn("discount_amount", info.DiscountAmount).Error
 	return err
 }
 
-func (o *OrderService) UpdateOrderNoteInfo(info *wechatReq.OrderNoteInfo) (err error) {
+func (o *OrderService) UpdateOrderNoteInfo(info *productReq.OrderNoteInfo) (err error) {
 	db := global.GVA_DB.Model(&product.Order{})
 	err = db.Where("id = ?", info.OrderId).UpdateColumn("note", info.Note).Error
 	return err
@@ -246,7 +298,7 @@ func (o *OrderService) UpdateOrderSetting(e *product.OrderSetting) (err error) {
 	return err
 }
 
-func (o *OrderService) UpdateOrderLogistics(infos *wechatReq.UpdateLogisticsRequest, ids []int) (err error) {
+func (o *OrderService) UpdateOrderLogistics(infos *productReq.UpdateLogisticsRequest, ids []int) (err error) {
 	tx := global.GVA_DB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -289,4 +341,112 @@ func (o *OrderService) UpdateOrderLogistics(infos *wechatReq.UpdateLogisticsRequ
 	}
 
 	return tx.Commit().Error
+}
+
+func (o *OrderService) UploadFile(header *multipart.FileHeader, noSave string, userId int) (file product.AfterSalesUpload, err error) {
+	n, err := snowflake.NewNode(1)
+	if err != nil {
+		global.GVA_LOG.Error("创建id失败!", zap.Error(err))
+	}
+	s := strings.Split(header.Filename, ".")
+	tag := s[len(s)-1]
+
+	uuid := n.Generate()
+	fileName := uuid.String()
+	header.Filename = fmt.Sprintf("%s.%s", fileName, tag)
+	oss := upload.NewOss()
+	filePath, key, uploadErr := oss.UploadFile(header, userId, 1)
+	if uploadErr != nil {
+		panic(err)
+	}
+
+	f := product.AfterSalesUpload{
+		Url:       filePath,
+		Name:      header.Filename,
+		Tag:       tag,
+		Key:       key,
+		SysUserId: userId,
+		FileId:    uuid.Int64(),
+	}
+	if noSave == "0" {
+		err = o.Upload(&f)
+		fmt.Println(f)
+		return f, err
+	}
+	return f, nil
+}
+
+func (o *OrderService) Upload(file *product.AfterSalesUpload) error {
+	return global.GVA_DB.Create(file).Error
+}
+
+func (o *OrderService) CreateDealOrderApply(apply *product.AfterSalesApply) error {
+	return global.GVA_DB.Debug().Create(apply).Error
+}
+
+func (o *OrderService) GetDealOrderList(searchInfo productReq.OrderDealSearchRequest) (list []*product.AfterSalesApply, total int64, err error) {
+	// 处理分页参数默认值，避免页码或页大小为负数/零
+	page := searchInfo.Page
+	if page <= 0 {
+		page = 1
+	}
+	pageSize := searchInfo.PageSize
+	if pageSize <= 0 || pageSize > 100 { // 限制最大页大小，防止恶意请求
+		pageSize = 10
+	}
+	limit := pageSize
+	offset := pageSize * (page - 1)
+
+	db := global.GVA_DB.Model(&product.AfterSalesApply{})
+	if len(searchInfo.Contact) > 0 {
+		db = db.Where("contact = ?", searchInfo.Contact)
+	}
+	if searchInfo.Status > 0 {
+		db = db.Where("status = ?", searchInfo.Status-100)
+	}
+
+	err = db.Count(&total).Error
+	if err != nil {
+		return list, total, err
+	} else {
+
+		err = db.Limit(limit).Offset(offset).Debug().Find(&list).Error
+	}
+
+	return list, total, err
+}
+
+func (o *OrderService) UpdateDealOrderSynchronous(info productReq.UpdateDealOrderRequest) (err error) {
+	tx := global.GVA_DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if tx.Error != nil {
+		return err
+	}
+
+	err = tx.Model(&product.AfterSalesApply{}).Debug().Where("id = ?", info.DealId).UpdateColumn("status", info.Status).Error
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("更新状态失败: %w", err)
+	}
+
+	err = tx.Model(&product.OrderItem{}).Debug().Where("id = ?", info.OrderItemId).UpdateColumn("status", 2).Error
+	if err != nil {
+		tx.Rollback()
+		return fmt.Errorf("更新状态失败: %w", err)
+	}
+
+	// 更新Product同时更新ProductLadder
+	return tx.Commit().Error
+
+}
+
+func (o *OrderService) GetOrderDealUploadImages(ids []int) (imagesList []product.AfterSalesUpload, err error) {
+	db := global.GVA_DB.Model(&product.AfterSalesUpload{})
+	db.Where("id in ?", ids).Find(&imagesList)
+	return imagesList, err
 }

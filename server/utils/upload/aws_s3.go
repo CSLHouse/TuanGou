@@ -25,7 +25,7 @@ type AwsS3 struct{}
 //@param: file *multipart.FileHeader
 //@return: string, string, error
 
-func (*AwsS3) UploadFile(file *multipart.FileHeader, userId int) (string, string, error) {
+func (*AwsS3) UploadFile(file *multipart.FileHeader, userId int, channel int) (string, string, error) {
 	session := newSession()
 	uploader := s3manager.NewUploader(session)
 

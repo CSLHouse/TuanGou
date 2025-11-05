@@ -62,19 +62,19 @@ func (Order) TableName() string {
 // OrderItem 订单中所包含的商品
 type OrderItem struct {
 	global.GVA_MODEL
-	OrderId           int     `json:"orderId" gorm:"not null;default null;comment:订单id;references:ID"`
-	OrderSn           string  `json:"orderSn" gorm:"null;default null;comment:订单编号;"`
-	ProductId         int     `json:"productId" gorm:"null;default null"`
-	ProductSkuId      string  `json:"productSkuId" gorm:"null;default null;comment:商品sku编号;"`
-	UserId            int     `json:"user_id" gorm:" not null;"`
-	Quantity          int     `json:"quantity" gorm:"null;default null;comment:购买数量;"`
-	Price             float32 `json:"price" gorm:"null;default null;comment:销售价格;"`
-	ProductPic        string  `json:"productPic" gorm:"null;default null;comment:商品主图;"`
-	ProductName       string  `json:"productName" gorm:"null;default null;comment:商品名称;"`
-	ProductSubTitle   string  `json:"productSubTitle" gorm:"null;default null;comment:商品副标题（卖点）;"`
-	ProductSkuCode    string  `json:"productSkuCode" gorm:"null;default null;comment:商品sku条码;"`
-	MemberNickname    string  `json:"memberNickname" gorm:"null;default null;comment:会员昵称;"`
-	DeleteStatus      int     `json:"deleteStatus" gorm:"null;default null;comment:是否删除;"`
+	OrderId         int     `json:"orderId" gorm:"not null;default null;comment:订单id;references:ID"`
+	OrderSn         string  `json:"orderSn" gorm:"null;default null;comment:订单编号;"`
+	ProductId       int     `json:"productId" gorm:"null;default null"`
+	ProductSkuId    string  `json:"productSkuId" gorm:"null;default null;comment:商品sku编号;"`
+	UserId          int     `json:"user_id" gorm:" not null;"`
+	Quantity        int     `json:"quantity" gorm:"null;default null;comment:购买数量;"`
+	Price           float32 `json:"price" gorm:"null;default null;comment:销售价格;"`
+	ProductPic      string  `json:"productPic" gorm:"null;default null;comment:商品主图;"`
+	ProductName     string  `json:"productName" gorm:"null;default null;comment:商品名称;"`
+	ProductSubTitle string  `json:"productSubTitle" gorm:"null;default null;comment:商品副标题（卖点）;"`
+	ProductSkuCode  string  `json:"productSkuCode" gorm:"null;default null;comment:商品sku条码;"`
+	MemberNickname  string  `json:"memberNickname" gorm:"null;default null;comment:会员昵称;"`
+	//DeleteStatus      int     `json:"deleteStatus" gorm:"null;default null;comment:是否删除;"`
 	ProductCategoryId int     `json:"productCategoryId" gorm:"null;default null;comment:商品分类;"`
 	ProductBrand      string  `json:"productBrand" gorm:"null;default null;comment:品牌;"`
 	ProductSN         string  `json:"productSN" gorm:"null;default null;"`
@@ -89,6 +89,7 @@ type OrderItem struct {
 	RealStock         int     `json:"realStock" gorm:"-"` // 剩余库存-锁定库存
 	GiftIntegration   int     `json:"giftIntegration" gorm:"null;default null;comment:购买商品赠送积分;"`
 	GiftGrowth        int     `json:"giftGrowth" gorm:"null;default null;comment:购买商品赠送成长值;"`
+	Status            int     `json:"status" gorm:"null;default 0;comment:是否申请售后,1-售后处理中，2-处理完毕;"`
 }
 
 func (OrderItem) TableName() string {
@@ -157,3 +158,34 @@ type CartCommonItem struct {
 //	Integration      int     `json:"integration"`      // 购买商品赠送积分
 //	Growth           int     `json:"growth"`           // 购买商品赠送成长值
 //}
+
+type AfterSalesUpload struct {
+	global.GVA_MODEL
+	Name      string `json:"name" gorm:"comment:文件名"`  // 文件名
+	Url       string `json:"url" gorm:"comment:文件地址"`  // 文件地址
+	Tag       string `json:"tag" gorm:"comment:文件标签"`  // 文件标签
+	Key       string `json:"key" gorm:"comment:编号"`    // 编号
+	FileId    int64  `json:"fileId" gorm:"comment:编号"` // 编号
+	SysUserId int    `json:"sysUserId" form:"sysUserId" gorm:"comment:管理ID"`
+}
+
+func (AfterSalesUpload) TableName() string {
+	return "oms_after_sales_upload"
+}
+
+// AfterSalesApply 售后申请
+type AfterSalesApply struct {
+	global.GVA_MODEL
+	UserId      int      `json:"userId" gorm:" not null;"`
+	OrderItemId int      `json:"orderItemId" gorm:"not null;default null;comment:订单id"`
+	Content     string   `json:"content" gorm:"not null;comment:反馈内容"`
+	Contact     string   `json:"contact" gorm:"not null;default null;comment:联系方式"`
+	RealAmount  float32  `json:"realAmount" gorm:"null;default null;comment:实际消费费用;"`
+	Images      string   `json:"images" gorm:"comment:上传后的图片列表"`
+	ImagesList  []string `json:"imagesList" gorm:"-"` // 数据库忽略，只用于前端传值
+	Status      int      `json:"status" gorm:"null;default null;comment:处理状态：0->待处理；1->处理完毕；"`
+}
+
+func (AfterSalesApply) TableName() string {
+	return "oms_after_sales_apply"
+}

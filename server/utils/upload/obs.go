@@ -17,7 +17,7 @@ func NewHuaWeiObsClient() (client *obs.ObsClient, err error) {
 	return obs.New(global.GVA_CONFIG.HuaWeiObs.AccessKey, global.GVA_CONFIG.HuaWeiObs.SecretKey, global.GVA_CONFIG.HuaWeiObs.Endpoint)
 }
 
-func (o *Obs) UploadFile(file *multipart.FileHeader, userId int) (string, string, error) {
+func (o *Obs) UploadFile(file *multipart.FileHeader, userId int, channel int) (string, string, error) {
 	// var open multipart.File
 	open, err := file.Open()
 	if err != nil {

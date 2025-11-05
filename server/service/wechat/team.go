@@ -8,8 +8,9 @@ import (
 	"cooller/server/utils/timer"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"time"
+
+	"gorm.io/gorm"
 )
 
 type TeamService struct{}
@@ -145,7 +146,7 @@ func (exa *TeamService) GetTeamsConsumeList(captainId int, userIds []int) (list 
 	return list, err
 }
 
-// CreateTeamSettlementSync 创建结算单
+// CreateTeamSettlementc 创建结算单
 // consumesIds 用户作为队长的所有未结算消费记录的id
 // 用户作为成员的未结算成团奖励记录
 func (exa *TeamService) CreateTeamSettlementSync(consumesIds []int, consumesId int, data *wechat.TeamSettlement) (err error) {

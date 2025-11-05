@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"cooller/server/service/system"
+
 	adapter "github.com/casbin/gorm-adapter/v3"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
@@ -277,6 +278,11 @@ func (i *initCasbin) InitializeData(ctx context.Context) (context.Context, error
 		{Ptype: "p", V0: "888", V1: "/team/settlementUpdate", V2: "POST"},
 		{Ptype: "p", V0: "888", V1: "/logistics/info", V2: "POST"},
 		{Ptype: "p", V0: "888", V1: "/order/logistics", V2: "PUT"},
+		{Ptype: "p", V0: "888", V1: "/order/upload/file", V2: "POST"},
+		{Ptype: "p", V0: "888", V1: "/order/deal", V2: "POST"},
+		{Ptype: "p", V0: "888", V1: "/order/deal", V2: "PUT"},
+		{Ptype: "p", V0: "888", V1: "/order/deal/list", V2: "GET"},
+		{Ptype: "p", V0: "888", V1: "/order/item/list", V2: "GET"},
 
 		{Ptype: "p", V0: "8881", V1: "/user/admin_register", V2: "POST"},
 		{Ptype: "p", V0: "8881", V1: "/api/createApi", V2: "POST"},
@@ -404,6 +410,11 @@ func (i *initCasbin) InitializeData(ctx context.Context) (context.Context, error
 		{Ptype: "p", V0: "8881", V1: "/team/settlementUpdate", V2: "POST"},
 		{Ptype: "p", V0: "8881", V1: "/logistics/info", V2: "POST"},
 		{Ptype: "p", V0: "8881", V1: "/order/logistics", V2: "PUT"},
+		{Ptype: "p", V0: "8881", V1: "/order/upload/file", V2: "POST"},
+		{Ptype: "p", V0: "8881", V1: "/order/deal", V2: "POST"},
+		{Ptype: "p", V0: "8881", V1: "/order/deal", V2: "PUT"},
+		{Ptype: "p", V0: "8881", V1: "/order/deal/list", V2: "GET"},
+		{Ptype: "p", V0: "8881", V1: "/order/item/list", V2: "GET"},
 
 		{Ptype: "p", V0: "9528", V1: "/user/admin_register", V2: "POST"},
 		//{Ptype: "p", V0: "9528", V1: "/api/createApi", V2: "POST"},
@@ -502,6 +513,9 @@ func (i *initCasbin) InitializeData(ctx context.Context) (context.Context, error
 		{Ptype: "p", V0: "9528", V1: "/team/reward", V2: "GET"},
 		{Ptype: "p", V0: "9528", V1: "/team/settlement", V2: "POST"},
 		{Ptype: "p", V0: "9528", V1: "/logistics/info", V2: "POST"},
+		{Ptype: "p", V0: "9528", V1: "/order/upload/file", V2: "POST"},
+		{Ptype: "p", V0: "9528", V1: "/order/deal", V2: "POST"},
+		{Ptype: "p", V0: "9528", V1: "/order/item/list", V2: "GET"},
 	}
 	if err := db.Create(&entities).Error; err != nil {
 		return ctx, errors.Wrap(err, "Casbin 表 ("+i.InitializerName()+") 数据初始化失败!")

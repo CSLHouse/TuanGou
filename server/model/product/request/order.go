@@ -1,5 +1,16 @@
 package request
 
+type SearchInfo struct {
+	Page            int    `json:"page" form:"page"`                       // 页码
+	PageSize        int    `json:"pageSize" form:"pageSize"`               // 每页大小
+	State           int    `json:"state" form:"state"`                     // 状态
+	OrderId         int    `json:"orderId" form:"orderId"`                 // 订单Id
+	OrderSn         string `json:"orderSn" form:"orderSn"`                 // 订单编号
+	ReceiverKeyword string `json:"receiverKeyword" form:"receiverKeyword"` // 收货人
+	OrderType       int    `json:"orderType" form:"orderType"`             // 订单分类
+	CreateTime      string `json:"createTime" form:"createTime"`           // 提交时间
+}
+
 type OrderCreateRequest struct {
 	AppId                  string `json:"appId" gorm:"null;default null"`
 	OpenId                 string `json:"openId" gorm:"not null;" binding:"required"`
@@ -53,4 +64,24 @@ type LogisticsInfo struct {
 
 type UpdateLogisticsRequest struct {
 	LogisticsInfos []LogisticsInfo `json:"logisticsInfos"`
+}
+
+type OrderDealRequest struct {
+	OrderItemId int    `json:"orderItemId"`
+	Content     string `json:"content"`
+	Contact     string `json:"contact"`
+	Images      string `json:"images"` // 存储的是图片id的字符串
+}
+
+type OrderDealSearchRequest struct {
+	Page     int    `json:"page" form:"page"`         // 页码
+	PageSize int    `json:"pageSize" form:"pageSize"` // 每页大小
+	Contact  string `json:"contact"`
+	Status   int    `json:"status" `
+}
+
+type UpdateDealOrderRequest struct {
+	DealId      int `json:"dealId"`
+	OrderItemId int `json:"orderItemId"`
+	Status      int `json:"status" form:"status"` // 数量
 }

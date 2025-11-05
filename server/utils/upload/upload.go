@@ -10,7 +10,7 @@ import (
 // Author [SliverHorn](https://github.com/SliverHorn)
 // Author [ccfish86](https://github.com/ccfish86)
 type OSS interface {
-	UploadFile(file *multipart.FileHeader, userId int) (string, string, error)
+	UploadFile(file *multipart.FileHeader, userId int, channel int) (string, string, error)
 	DeleteFile(key string) error
 	DeleteFiles(files []string) error
 	UploadFileWithLocationPath(localPath string, fileName string, userId int) (string, string, error)
