@@ -113,3 +113,6 @@ https://www.apispace.com/eolink/test/wlgj1?org_id=74827&project_id=1316
 TODO:
 1. 留存率、日活等统计
 
+
+远程服务器信息：
+1. mysql密码：nopwd@mysql

@@ -4,6 +4,7 @@ import (
 	"context"
 	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -72,7 +73,7 @@ func (i *initBrand) DataInserted(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("name = ?", "猪迪克星动乐园").First(&productModel.Brand{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("name = ?", "自营").First(&productModel.Brand{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true
