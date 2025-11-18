@@ -134,8 +134,8 @@
 				this[key][index].productPic = '/static/errorImage.jpg';
 			},
 			navToLogin() {
-				uni.navigateTo({
-					url: '/pages/user/user'
+				uni.switchTab({
+					url: "/pages/user/user"
 				})
 			},
 			//选中状态处理

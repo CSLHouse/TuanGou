@@ -5,13 +5,13 @@
 		<view class="goods-list">
 			<view v-for="(item, index) in productList" :key="index" class="goods-item" @click="navToDetailPage(item)">
 				<view class="image-wrapper">
-					<image :src="item.pic" mode="aspectFit"></image>
+					<image :src="item.product.pic" mode="aspectFit"></image>
 				</view>
-				<text class="title clamp">{{item.name}}</text>
-				<text class="title2">{{item.subTitle}}</text>
+				<text class="title clamp">{{item.product.name}}</text>
+				<text class="title2">{{item.product.subTitle}}</text>
 				<view class="price-box">
-					<text class="price">{{item.price}}</text>
-					<text>已售 {{item.sale}}</text>
+					<text class="price">{{item.product.price}}</text>
+					<text>已售 {{item.product.sale}}</text>
 				</view>
 			</view>
 		</view>
@@ -66,11 +66,11 @@
 				}
 
 				if (type === 'refresh') {
-					this.searchParam.page=1;
+					this.searchParam.page = 1;
 					this.productList = [];
 				}
 				fetchNewProductList(this.searchParam).then(response => {
-					let productList = response.data;
+					let productList = response.data.list;
 					if (response.data.length === 0) {
 						//没有更多了
 						this.loadingType = 'nomore';
@@ -100,7 +100,6 @@
 					url: `/subpages/product/product?id=${id}`
 				})
 			},
-			stopPrevent() {}
 		},
 	}
 </script>
@@ -110,9 +109,11 @@
 	.content {
 		background: $page-color-base;
 	}
-	.banner-image{
+
+	.banner-image {
 		width: 100%;
 	}
+
 	.section-tit {
 		font-size: $font-base+2upx;
 		color: $font-color-dark;
@@ -122,6 +123,7 @@
 		padding-top: 20upx;
 		padding-bottom: 20upx;
 	}
+
 	/* 商品列表 */
 	.goods-list {
 		display: flex;

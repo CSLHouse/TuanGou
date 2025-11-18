@@ -37,7 +37,7 @@ export function fetchNewProductList(params) {
 export function fetchHotProductList(params) {
 	return request({
 		method: 'GET',
-		url: '/promo/hotProductList',
+		url: '/promo/recommendProductList',
 		params: params
 	})
 }

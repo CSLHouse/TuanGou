@@ -54,7 +54,6 @@
 				} else {
 					_this.refreshLoginSession()
 				}
-				console.log("---APP--openId--  ", _this.$store.state.openId)
 				const token = wx.getStorageSync("Token")
 				const tokenTime = wx.getStorageSync("TokenTime")
 				const userInfo = wx.getStorageSync("UserInfo")
@@ -89,19 +88,8 @@
 					console.error("[App:getToken]Not Found openId:", _this.$store.state.openId)
 				});
 			},
-			// onGetLocation() {
-			// 	uni.getLocation({
-			// 		success: (res) => {
-			// 			console.log("--success--res----", res)
-			// 		},
-			// 		fail: (res) => {
-			// 			console.log("----fail---res---", res)
-			// 		}
-			// 	})
-			// },
 		},
 		onLaunch: function() {
-			// this.onGetLocation()
 			this.checkUpdate()
 			this.initWXLogin()
 		},

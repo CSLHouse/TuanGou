@@ -70,22 +70,6 @@ export function wxRefreshLogin(data) {
 	})
 }
 
-export function GetMemberCardList(params) {
-	return request({
-		method: 'GET',
-		url: '/business/cardList',
-		params: params
-	})
-}
-
-export function GetCertificateList(params) {
-	return request({
-		method: 'GET',
-		url: '/business/certificateList',
-		params: params
-	})
-}
-
 export function WXResetNickName(data) {
 	return request({
 		method: 'POST',

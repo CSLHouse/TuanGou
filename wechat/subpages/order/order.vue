@@ -156,7 +156,6 @@
 				return statusTip;
 			},
 			formatProductAttr(jsonAttr) {
-				// console.log("--[formatProductAttr]-jsonAttr:", jsonAttr)
 				let attrArr = JSON.parse(jsonAttr);
 				// let attrArr = jsonAttr;
 				let attrStr = '';
@@ -195,7 +194,6 @@
 				this.orderParam.state = state;
 				this.loadingType = 'loading';
 				fetchOrderList(this.orderParam).then(response => {
-					console.log("--fetchOrderList--", response)
 					if (response.code == 0) {
 						let list = response.data.list;
 						if (type == 'refresh') {
@@ -321,7 +319,6 @@
 			},
 			// 申请售后
 			async afterSale(orderId, index) {
-				console.log("--------afterSale----")
 				uni.navigateTo({
 					url: `/subpages/feedback/feedbackList?orderId=` + orderId + "&index=" + index
 				})

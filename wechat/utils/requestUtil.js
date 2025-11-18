@@ -84,7 +84,7 @@ http.interceptor.response((response) => {
 							success: () => {
 								store.dispatch('logout')
 								uni.reLaunch({
-									url: '/pages/index/index'
+									url: '/pages/user/user'
 								})
 							}
 						})
@@ -98,7 +98,7 @@ http.interceptor.response((response) => {
 						success: () => {
 							store.dispatch('logout')
 							uni.reLaunch({
-								url: '/pages/index/index'
+								url: '/pages/user/user'
 							})
 						}
 					})

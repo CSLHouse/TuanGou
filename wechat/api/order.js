@@ -111,13 +111,10 @@ export function UploadFileEx(file) {
 				'x-user_id': store.state.userInfo?.id || '',
 			},
 			success: res => {
-				console.log(JSON.stringify(res.data))
 				let resp = JSON.parse(res.data);
-				console.log(JSON.stringify(resp))
 				if (resp.code == 0) { // 正常返回 
 					resolve(resp)
 				} else { // 错误返回
-					console.log("-----");
 					resolve(resp);
 				}
 			},
@@ -130,7 +127,6 @@ export function UploadFileEx(file) {
 			}
 		};
 
-		console.log("----", file)
 		fromData.filePath = file.uri;
 		fromData.name = "file";
 		uni.uploadFile(fromData);
@@ -153,7 +149,6 @@ export function UploadFile(file) {
 				'x-user_id': store.state.userInfo?.id || '',
 			},
 			success: res => {
-				console.log(JSON.stringify(res.data))
 				let resp = JSON.parse(res.data);
 				if (resp.state) { // 正常返回 
 					resolve({
@@ -161,7 +156,6 @@ export function UploadFile(file) {
 						"fail": null
 					})
 				} else { // 错误返回
-					console.log("-----");
 					resolve({
 						"success": null,
 						"fail": resp.data
@@ -212,7 +206,6 @@ export async function UploadFileWx(files) {
 		// 循环上传每个文件（串行上传，也可根据需求改为并行Promise.all）
 		for (const file of files) {
 			const res = await UploadFileEx(file);
-			console.log("-------res", res)
 			if (res.code === 0 && res.data.id && res.data.id > 0) {
 				resp.push(res.data.id);
 			} else {

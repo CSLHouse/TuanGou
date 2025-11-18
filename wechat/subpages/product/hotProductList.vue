@@ -66,11 +66,11 @@
 				}
 
 				if (type === 'refresh') {
-					this.searchParam.page=1;
+					this.searchParam.page = 1;
 					this.productList = [];
 				}
 				fetchHotProductList(this.searchParam).then(response => {
-					let productList = response.data;
+					let productList = response.data.list;
 					if (response.data.length === 0) {
 						//没有更多了
 						this.loadingType = 'nomore';
@@ -100,7 +100,6 @@
 					url: `/subpages/product/product?id=${id}`
 				})
 			},
-			stopPrevent() {}
 		},
 	}
 </script>
@@ -110,9 +109,11 @@
 	.content {
 		background: $page-color-base;
 	}
-	.banner-image{
+
+	.banner-image {
 		width: 100%;
 	}
+
 	.section-tit {
 		font-size: $font-base+2upx;
 		color: $font-color-dark;
@@ -122,6 +123,7 @@
 		padding-top: 20upx;
 		padding-bottom: 20upx;
 	}
+
 	/* 商品列表 */
 	.goods-list {
 		display: flex;

@@ -57,7 +57,6 @@
 			}).then(response => {
 				this.orderInfo = response.data.order;
 				this.payment = response.data.payment
-				console.log("----this.orderInfo----", response.data)
 			});
 		},
 		methods: {
@@ -68,7 +67,6 @@
 			//确认支付
 			confirm: async function() {
 				let _this = this
-				console.log("-【confirm】-payment---", _this.payment)
 				if (_this.payment) {
 					wx.requestPayment({
 						"provider": "wxpay",
@@ -78,7 +76,6 @@
 						"signType": _this.payment.SignType,
 						"paySign": _this.payment.paySign,
 						"success": function(res) {
-							console.log("---支付成功：", res)
 							payOrderSuccess({
 								orderId: parseInt(_this.orderId),
 								payType: _this.payType

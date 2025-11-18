@@ -266,7 +266,6 @@
 					orderParam.couponId = this.currCoupon.id;
 				}
 				generateOrder(orderParam).then(response => {
-					console.log("---generateOrder--", response)
 					if (response.data.code != 0 && response.data.code == 7) {
 						this.$api.msg("请勿重复下单！！")
 						return
@@ -292,7 +291,6 @@
 									url: `/subpages/money/pay?orderId=${orderId}&&payment=${payment}`
 								})
 							} else if (res.cancel) {
-								console.log("cancel")
 								uni.redirectTo({
 									url: '/pages/order/order?state=0'
 								})

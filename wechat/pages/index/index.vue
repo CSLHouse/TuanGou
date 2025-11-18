@@ -98,7 +98,7 @@
 		</view>
 
 		<!-- 团购楼层 -->
-		<view class="f-header m-t" v-if="groupBuyProducts.groups != null && groupBuyProducts.groups.length > 0">
+		<!-- <view class="f-header m-t" v-if="groupBuyProducts.groups != null && groupBuyProducts.groups.length > 0">
 			<image src="/static/temp/h1.png"></image>
 			<view class="tit-box">
 				<text class="tit">精品团购</text>
@@ -108,7 +108,7 @@
 		<view class="group-section" v-if="groupBuyProducts.groups != null && groupBuyProducts.groups.length > 0">
 			<swiper class="g-swiper" :duration="500">
 				<swiper-item class="g-swiper-item" v-for="(item, index) in groupBuyProducts.groups" :key="index">
-					<view class="g-item left" @click="navToDetailPageById(item.productId)">
+					<view v-if="index % 2 == 1" class="g-item left" @click="navToDetailPageById(item.productId)">
 						<image :src="item.pic" mode="aspectFill"></image>
 						<view class="t-box">
 							<text class="title clamp">{{item.name}}</text>
@@ -125,7 +125,7 @@
 							</view>
 						</view>
 					</view>
-					<view class="g-item right" @click="navToDetailPageById(item.productId)">
+					<view v-else class="g-item right" @click="navToDetailPageById(item.productId)">
 						<image :src="item.pic" mode="aspectFill"></image>
 						<view class="t-box">
 							<text class="title clamp">{{item.name}}</text>
@@ -144,7 +144,7 @@
 				</swiper-item>
 
 			</swiper>
-		</view>
+		</view> -->
 
 		<!-- 新鲜好物 -->
 		<view class="f-header m-t" @click="navToNewProudctListPage()">
@@ -216,8 +216,6 @@
 		</view>
 		<uni-load-more :status="loadingType"></uni-load-more>
 
-		<one-click-register></one-click-register>
-
 	</view>
 </template>
 
@@ -272,7 +270,6 @@
 		},
 		onLoad(options) {
 			if (options.refCode && options.refCode.length > 0) {
-				console.log("--------refCode------", options.refCode)
 				this.$store.state.formOpenId = options.refCode
 			}
 			this.loadData(options);
@@ -335,95 +332,16 @@
 		},
 		methods: {
 			...mapMutations(['login']),
-			// getNickname(e) {
-			// 	this.nickName = e.detail.value
-			// },
-			// checkNickName() {
-			// 	if (!this.nickName) {
-			// 		this.$api.msg('请输入昵称')
-			// 		return false
-			// 	}
-			// 	let str = this.nickName.trim();
-			// 	if (str.length == 0) {
-			// 		this.$api.msg('请输入正确的昵称')
-			// 		return false
-			// 	}
-			// 	this.nickName = str
-			// 	return true
-			// },
-
-			// confirmNickName() {
-			// 	let _this = this
-			// 	if (this.$store.state.userInfo) {
-			// 		_this.$store.state.userInfo.nickName = this.nickName
-			// 		WXResetNickName(this.$store.state.userInfo).then(res => {
-			// 			if (res.code == 0) {
-			// 				_this.$store.state.hadNickName = true
-			// 				uni.setStorage({ //缓存用户登陆状态
-			// 					key: 'UserInfo',
-			// 					data: _this.$store.state.userInfo
-			// 				})
-			// 				_this.isCloseNickNameModel = true
-			// 				this.$api.msg('设置成功')
-			// 			} else {
-			// 				this.$api.msg('设置失败')
-			// 			}
-			// 		});
-			// 	}
-
-			// },
-			// closePop() {
-			// 	this.isCloseModel = true
-			// },
-			// decryptPhoneNumber: function(e) {
-			// 	let _this = this
-			// 	console.log("--------decryptPhoneNumber---------", e.detail)
-			// 	if (e.detail.errMsg == "getPhoneNumber:ok") {
-			// 		if (_this.$store.state.openId && _this.$store.state.openId.length > 0) {
-			// 			getWXPhoneNumber({
-			// 				openId: _this.$store.state.openId,
-			// 				code: e.detail.code
-			// 			}).then(res => {
-			// 				if (res.code == 0) {
-			// 					_this.getToken()
-			// 					this.$api.msg('注册成功')
-			// 				} else {
-			// 					this.$api.msg('注册会员失败')
-			// 				}
-			// 			});
-			// 		}
-			// 	}
-			// },
-			// getToken() {
-			// 	let _this = this
-			// 	wxRefreshLogin({
-			// 		openId: _this.$store.state.openId
-			// 	}).then(res => {
-			// 		if (res.code == 0) {
-			// 			const userinfo = res.data
-			// 			wx.setStorageSync("Token", userinfo.token)
-			// 			wx.setStorageSync("TokenTime", userinfo.expiresAt)
-			// 			_this.$store.state.token = userinfo.token
-			// 			this.login(userinfo.customer);
-			// 		}
-			// 	}).catch(errors => {
-			// 		uni.showModal({
-			// 			title: '提示',
-			// 			content: '网络错误',
-			// 			showCancel: false
-			// 		})
-			// 	});
-			// },
 			/**
 			 * 加载数据
 			 */
 			async loadData() {
 				fetchContent().then(response => {
-					console.log("---fetchContent-----", response.data)
 					this.advertiseList = response.data.advertiseList;
 					this.swiperLength = this.advertiseList.length;
 					this.brandList = response.data.brandList;
 					this.homeFlashPromotion = response.data.homeFlashPromotion;
+					console.log("-------this.homeFlashPromotion------", this.homeFlashPromotion)
 					this.newProductList = response.data.newProductList;
 					this.hotProductList = response.data.hotProductList;
 					this.groupBuyProducts = response.data.groupBuy
@@ -481,11 +399,11 @@
 				})
 			},
 			//人气推荐列表页
-			// navToHotProudctListPage() {
-			// 	uni.navigateTo({
-			// 		url: `/subpages/product/hotProductList`
-			// 	})
-			// },
+			navToHotProudctListPage() {
+				uni.navigateTo({
+					url: `/subpages/product/hotProductList`
+				})
+			},
 		},
 		// #ifndef MP
 		// 标题栏input搜索框点击

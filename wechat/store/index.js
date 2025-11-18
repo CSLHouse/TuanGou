@@ -93,6 +93,9 @@ const store = new Vuex.Store({
 		// }, openId) {
 		// 	commit('setFormOpenId', openId);
 		// },
+		logout(context) {
+			context.commit('logout')
+		}
 	}
 })
 

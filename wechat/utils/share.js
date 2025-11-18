@@ -13,7 +13,6 @@ export default {
 	onShareAppMessage(res) { //发送给朋友
 		let that = this;
 		let imageUrl = that.shareUrl || '';
-		console.log("----------scope:", this.$scope)
 		if (res.from === 'button') {
 			//这块需要传参，不然链接地址进去获取不到数据
 			let path = `/` + that.$scope.route + `?id=` + that.$scope.options.id;

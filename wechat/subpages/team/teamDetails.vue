@@ -13,7 +13,7 @@
 
 <script>
 	// 2. 引入ECharts（路径与你示例一致，确保文件存在）
-	import * as echarts from '@/uni_modules/lime-echart/static/echarts.min'
+	import * as echarts from '@/subpages/components/lime-echart/static/echarts.min'
 	// 3. 引入原业务接口（获取队员收益数据）
 	import {
 		fetchTeamDetail

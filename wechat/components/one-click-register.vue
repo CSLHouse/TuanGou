@@ -25,7 +25,6 @@
 						<image :src="defaultAvatarUrl" class="avatar"></image>
 						<!-- 未获取头像：显示“选择微信头像”按钮 -->
 						<button class="get-btn" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
-							<!-- <icon type="right" size="24rpx" color="#999" class="btn-arrow"></icon> -->
 							<uni-icons type="right" size="18"></uni-icons>
 						</button>
 					</div>
@@ -52,8 +51,9 @@
 					<label class="form-label">电话号码</label>
 					<div class="form-value">
 						<!-- 已获取手机号：显示脱敏号码 -->
-						<span v-if="phoneNumber"
-							class="phone-text">{{ phoneNumber.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1****$3') }}</span>
+						<input type="text" v-if="phoneNumber" v-model="phoneNumber" class="form-input" />
+						<!-- <span v-if="phoneNumber"
+							class="phone-text">{{ phoneNumber.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1****$3') }}</span> -->
 						<!-- 未获取手机号：显示“一键获取”按钮（带箭头） -->
 						<button v-else class="get-btn" open-type="getPhoneNumber" @getphonenumber="onGetPhoneNumber">
 							<uni-icons type="right" size="18"></uni-icons>
@@ -105,9 +105,12 @@
 	} from '@/api/member.js';
 	export default {
 		name: "one-click-register",
+		props: {
+			isCloseModel: Boolean
+		},
 		data() {
 			return {
-				isCloseModel: false,
+				// isCloseModel: false,
 				hasGotUserInfo: false,
 				phoneNumber: '',
 				isAgreementChecked: false,
@@ -127,26 +130,14 @@
 		methods: {
 			...mapMutations(['login']),
 			closePop() {
-				this.isCloseModel = true
+				this.$emit('closeEvent', true)
 			},
 			// 获取用户头像、昵称、省份信息
 			onChooseAvatar(e) {
 
 				this.defaultAvatarUrl = e.detail.avatarUrl
-				console.log(this.defaultAvatarUrl)
 				this.hasGotUserInfo = true
 			},
-
-			// onGetLocation() {
-			// 	uni.getLocation({
-			// 		success: (res) => {
-			// 			console.log("--success--res----", res)
-			// 		},
-			// 		fail: (res) => {
-			// 			console.log("----fail---res---", res)
-			// 		}
-			// 	})
-			// },
 			// 获取手机号（需要后端解密）
 			onGetPhoneNumber(e) {
 				let _this = this
@@ -178,7 +169,7 @@
 				}).then(res => {
 					if (res.code == 0) {
 						_this.phoneNumber = res.data.phoneNumber
-
+						_this.phoneNumber = _this.phoneNumber.replace(/^(\d{3})(\d{4})(\d{4})$/, '$1****$3')
 						this.hasGotPhone = true
 					} else {
 						_this.$api.msg('获取手机号失败')
@@ -232,7 +223,7 @@
 						wx.setStorageSync("TokenTime", userinfo.expiresAt)
 						_this.$store.state.token = userinfo.token
 						_this.login(userinfo.customer);
-						_this.isCloseModel = true
+						this.$emit('closeEvent', true)
 					} else {
 						_this.$api.msg(res.msg)
 					}
@@ -386,11 +377,9 @@
 
 	/* 输入框：居右显示+自适应宽度 */
 	.form-input {
-
-		/* 可选：使背景色透明 */
 		width: 100%;
 		/* 占满form-value宽度 */
-		height: 60rpx;
+		height: 80rpx;
 		padding: 0 20rpx;
 		border-bottom: 1px solid #eee;
 		border-radius: 8rpx;

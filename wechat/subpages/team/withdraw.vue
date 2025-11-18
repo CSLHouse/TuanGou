@@ -70,7 +70,7 @@
 				count: 0,
 				withdrawCount: null,
 				userId: null,
-				qrCodePath: '/static/service_qrcode.png',
+				qrCodePath: '/static/service_qrcode.jpg',
 				isLoading: false,
 			};
 		},

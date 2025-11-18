@@ -38,7 +38,6 @@
 			async loadData() {
 				fetchProductCateList(0).then(response => {
 					this.flist = response.data.list;
-					console.log('-----------', response.data)
 					if (this.flist.length > 0) {
 						this.currentId = this.flist[0].id;
 						fetchProductCateList(this.currentId).then(response => {

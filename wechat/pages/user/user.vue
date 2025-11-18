@@ -73,7 +73,9 @@
 			</view>
 		</view>
 
-		<one-click-register></one-click-register>
+		<view v-if="!isCloseModel">
+			<one-click-register :isCloseModel="isCloseModel" @closeEvent="closeEvent"></one-click-register>
+		</view>
 	</view>
 </template>
 
@@ -111,7 +113,8 @@
 				couponCount: null,
 				nickName: '',
 				avatarUrl: null,
-				rewardAmount: 0.0
+				rewardAmount: 0.0,
+				isCloseModel: true,
 			}
 		},
 		onLoad() {},
@@ -148,64 +151,6 @@
 		},
 		methods: {
 			...mapMutations(['login']),
-			// getNickname(e) {
-			// 	this.nickName = e.detail.value
-			// },
-			// async handleConfirmNickName() {
-			// 	let _this = this
-			// 	let isUpload = false
-			// 	if (_this.avatarUrl && _this.avatarUrl != '') {
-			// 		uni.uploadFile({
-			// 			url: common.baseUrl + "/fileUploadAndDownload/upload",
-			// 			filePath: _this.avatarUrl,
-			// 			name: 'file',
-			// 			header: {
-			// 				"x-token": _this.$store.state.token,
-			// 				"x-user_id": _this.$store.state.userInfo.id,
-			// 				"Access-Control-Allow-Origin": "*",
-			// 				"Access-Control-Allow-Methods": "*"
-			// 			},
-			// 			success: res => {
-			// 				const response = JSON.parse(res.data)
-			// 				if (response.code == 0) {
-			// 					_this.$store.state.userInfo.avatarUrl = response.data.file.url
-			// 					_this.$store.state.hadNickName = true
-			// 					uni.setStorage({ //缓存用户登陆状态
-			// 						key: 'UserInfo',
-			// 						data: _this.$store.state.userInfo
-			// 					})
-			// 					_this.isCloseNickNameModel = true
-			// 					_this.isUpload = true
-			// 					this.resetNick()
-			// 				}
-			// 			},
-			// 			fail: (error) => {
-			// 				this.$api.msg("设置失败", 2000)
-			// 			}
-			// 		})
-			// 	}
-			// },
-			// async resetNick() {
-			// 	let _this = this
-			// 	if (_this.$store.state.userInfo && _this.isUpload) {
-			// 		_this.$store.state.userInfo.nickName = _this.nickName
-			// 		WXResetNickName(_this.$store.state.userInfo).then(res => {
-			// 			if (res.code == 0) {
-			// 				this.$api.msg("设置成功", 2000)
-			// 				_this.$store.state.hadNickName = true
-			// 				uni.setStorage({ //缓存用户登陆状态
-			// 					key: 'UserInfo',
-			// 					data: _this.$store.state.userInfo
-			// 				})
-			// 				_this.isCloseNickNameModel = true
-			// 			} else {
-			// 				this.$api.msg("设置失败", 2000)
-			// 			}
-			// 		});
-			// 	} else {
-			// 		this.$api.msg("头像设置失败", 2000)
-			// 	}
-			// },
 			async fetchCounponCount() {
 				if (this.hasLogin) {
 					fetchMemberCouponList(0).then(response => {
@@ -220,9 +165,7 @@
 			async fetchTeamReward() {
 				if (this.hasLogin) {
 					fetchTeamReward().then(response => {
-						console.log("-----------fetchTeamReward-------", response)
 						if (response.data != null) {
-							console.log("-----response---", response)
 							this.rewardAmount = response.data;
 						}
 					});
@@ -231,6 +174,9 @@
 
 			goLogin() {
 				this.isCloseModel = false
+			},
+			closeEvent(status) {
+				this.isCloseModel = status
 			},
 			/**
 			 * 统一跳转接口,拦截未登录路由
@@ -296,9 +242,11 @@
 				this.$api.msg("待开放")
 			},
 			onWithdrawClick() {
-				uni.navigateTo({
-					url: "/subpages/team/withdraw?count=" + this.rewardAmount
-				})
+				if (this.rewardAmount > 0) {
+					uni.navigateTo({
+						url: "/subpages/team/withdraw?count=" + this.rewardAmount
+					})
+				}
 			}
 		}
 	}

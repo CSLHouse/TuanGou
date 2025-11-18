@@ -5,7 +5,7 @@
 			"path": "pages/index/index",
 			"style": {
 				// #ifdef MP 
-				"navigationBarTitleText": "团购GO",
+				"navigationBarTitleText": "众推优购",
 				//"navigationStyle": "custom",
 				// #endif 
 				"enablePullDownRefresh": true,
@@ -112,6 +112,18 @@
 				}
 			},
 			{
+				"path": "product/hotProductList",
+				"style": {
+					"navigationBarTitleText": "人气推荐列表页"
+				}
+			},
+			{
+				"path": "product/newProductList",
+				"style": {
+					"navigationBarTitleText": "新鲜好物列表页"
+				}
+			},
+			{
 				"path": "set/set",
 				"style": {
 					"navigationBarTitleText": "设置"
@@ -184,14 +196,6 @@
 				"style": {
 					"enablePullDownRefresh": true,
 					"navigationBarTitleText": "推荐品牌列表"
-				}
-			},
-			{
-				"path": "member/member",
-				"name": "member",
-				"style": {
-					"navigationBarTitleText": "",
-					"enablePullDownRefresh": false
 				}
 			},
 			{

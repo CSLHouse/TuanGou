@@ -130,7 +130,6 @@
 			},
 			formatProductAttr(jsonAttr) {
 				let attrArr = JSON.parse(jsonAttr);
-				// console.log("--[formatProductAttr]-attrArr:", attrArr)
 				let attrStr = '';
 				for (let attr of attrArr) {
 					attrStr += attr.key;
@@ -138,7 +137,6 @@
 					attrStr += attr.value;
 					attrStr += ";";
 				}
-				// console.log("--[formatProductAttr]-attrStr:", attrStr)
 				return attrStr
 			},
 			formatDateTime(time) {
@@ -211,7 +209,6 @@
 			},
 			// 申请售后
 			async afterSale(orderId, index) {
-				console.log("--------afterSale----")
 				uni.navigateTo({
 					url: `/subpages/feedback/feedback?orderItemId=` + orderItemId + "&index=" + index
 				})
@@ -224,7 +221,6 @@
 				let now = new Date();
 				let result = now.getTime() - date.getTime()
 				let n = Math.floor(result / (24 * 3600 * 1000));
-				console.log('---------相差天数：', n)
 				if (n >= 7) {
 					return true
 				}

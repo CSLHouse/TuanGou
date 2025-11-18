@@ -118,7 +118,6 @@
 					}).then(response => {
 						this.joindInfos = response.data.joinedTeam
 						this.myTeamsInfos = response.data.myTeams;
-						console.log("---this.myTeamsInfos-----", this.myTeamsInfos)
 					});
 				} else {
 					uni.showToast({
@@ -129,7 +128,6 @@
 			},
 			onShowDetails(teams) {
 				let userIds = [];
-				console.log("----teams-------", teams)
 				teams.forEach(item => {
 					if (item.id) {
 						userIds.push(item.id);

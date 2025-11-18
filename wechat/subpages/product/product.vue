@@ -256,7 +256,8 @@
 			<div class="modal-dialog">
 				<div class="modal-content">
 					<image class="img" src="/static/pop.jpg"></image>
-					<image class="qr-code" :show-menu-by-longpress="true" src="/static/my.jpg" @click="previewImage">
+					<image class="qr-code" :show-menu-by-longpress="true" src="/static/service_qrcode.jpg"
+						@click="previewImage">
 					</image>
 					<image style="width:402rpx;height:94rpx;" src="/static/longbtn.jpg"></image>
 				</div>
@@ -375,7 +376,6 @@
 		methods: {
 			async loadData(id) {
 				fetchProductDetail(id).then(response => {
-					console.log("---response.data----", response.data)
 					this.product = response.data.product;
 					this.skuStockList = this.product.skuStockList;
 					this.brandId = this.product.brandId;
@@ -561,7 +561,6 @@
 					quantity: this.number
 				};
 				addCartTmpItem(cartItem).then(response => {
-					console.log("----response-----", response)
 					if (response.code == 0) {
 						let id = response.data.id
 						if (id && id > 0) {
@@ -622,9 +621,7 @@
 										name: inputList[j]
 									});
 								}
-							} else {
-								// console.log("--initSpecList-valueList,无参:", valueList)
-							}
+							} else {}
 						} else if (item.handAddStatus == 0) {
 							//不支持手动新增的
 							let inputList = item.inputList.split(',');

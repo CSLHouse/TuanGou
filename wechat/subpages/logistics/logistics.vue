@@ -1,6 +1,5 @@
 <template>
 	<view>
-
 		<lee-logistics :list="dataList" :cardInfo="cardInfo"></lee-logistics>
 	</view>
 </template>
@@ -17,30 +16,7 @@
 		data() {
 			return {
 				orderId: null,
-				dataList: [{
-						status: '已签收',
-						content: '快递员 小陈已将物品配送到目的地 请尽快签收 有问题请联系***',
-						time: '2023-05-01 06:20:28'
-					},
-					{
-						content: '[厦门市] 快递到达胜利路胜利街199号',
-						time: '2023-05-01 03:10:12'
-					},
-					{
-						content: '[广州市] 快递到达望海镇九五大街转运中心',
-						time: '2023-04-29 22:45:28'
-					},
-					{
-						status: '正在揽件',
-						content: '包裹正在揽收，快递小哥正在快马加鞭的赶来~',
-						time: '2023-04-29 14:18:39'
-					},
-					{
-						status: '已接单',
-						content: '包裹正在打包中~',
-						time: '2023-04-28 18:50:26'
-					}
-				],
+				dataList: [],
 				cardInfo: {
 					src: '',
 					type: '',
@@ -77,7 +53,6 @@
 				}
 				let _this = this
 				queryLogisticsInfo(params).then(response => {
-					console.log("--queryLogisticsInfo--", response)
 					if (response.code == 0) {
 						_this.dataList = response.data.dataList
 						_this.cardInfo.no = response.data.no
