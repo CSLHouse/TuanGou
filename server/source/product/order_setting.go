@@ -1,14 +1,15 @@
-package wechat
+package product
 
 import (
 	"context"
-	wechatModel "cooller/server/model/product"
+	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
-const initOrderOrderSetting = initOrderNewProduct + 1
+const initOrderOrderSetting = initOrderProductOrder + 1
 
 type initOrderSetting struct{}
 
@@ -23,7 +24,7 @@ func (i *initOrderSetting) MigrateTable(ctx context.Context) (context.Context, e
 		return ctx, system.ErrMissingDBContext
 	}
 	return ctx, db.AutoMigrate(
-		&wechatModel.OrderSetting{},
+		&productModel.OrderSetting{},
 	)
 }
 
@@ -32,11 +33,11 @@ func (i *initOrderSetting) TableCreated(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	return db.Migrator().HasTable(&wechatModel.OrderSetting{})
+	return db.Migrator().HasTable(&productModel.OrderSetting{})
 }
 
 func (i initOrderSetting) InitializerName() string {
-	return wechatModel.OrderSetting{}.TableName()
+	return productModel.OrderSetting{}.TableName()
 }
 
 func (i *initOrderSetting) InitializeData(ctx context.Context) (next context.Context, err error) {
@@ -45,14 +46,14 @@ func (i *initOrderSetting) InitializeData(ctx context.Context) (next context.Con
 		return ctx, system.ErrMissingDBContext
 	}
 
-	entities := []wechatModel.OrderSetting{
+	entities := []productModel.OrderSetting{
 		{
 			FlashOrderOvertime:  60,
 			NormalOrderOvertime: 120,
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {
-		return ctx, errors.Wrap(err, wechatModel.OrderSetting{}.TableName()+"表数据初始化失败!")
+		return ctx, errors.Wrap(err, productModel.OrderSetting{}.TableName()+"表数据初始化失败!")
 	}
 	next = context.WithValue(ctx, i.InitializerName(), entities)
 
@@ -64,7 +65,7 @@ func (i *initOrderSetting) DataInserted(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("flash_order_overtime = ?", 60).First(&wechatModel.OrderSetting{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("flash_order_overtime = ?", 60).First(&productModel.OrderSetting{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true

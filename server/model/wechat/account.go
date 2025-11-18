@@ -31,23 +31,3 @@ type WXUser struct {
 func (WXUser) TableName() string {
 	return "wx_user"
 }
-
-// MemberReceiveAddress 会员收货地址表
-type MemberReceiveAddress struct {
-	global.GVA_MODEL
-	UserId        int    `json:"userId" `
-	Name          string `json:"name" gorm:"not null;comment:收货人名称;size:100"`
-	Telephone     string `json:"telephone" gorm:"not null；comment:手机号;size:11"`
-	DefaultStatus uint   `json:"defaultStatus" gorm:"comment:是否默认;0->是；1->否"`
-	PostCode      string `json:"postCode" gorm:"comment:邮政编码"`
-	Province      string `json:"province" gorm:"comment:省份/直辖市"`
-	City          string `json:"city" gorm:"not null；comment:城市"`
-	Region        string `json:"region" gorm:"not null；comment:区"`
-	DetailAddress string `json:"detailAddress" gorm:"comment:详细地址(楼层、门牌号)"`
-
-	//SysUserAuthorityID uint   `json:"sys_user_authority_id" form:"sys_user_authority_id" gorm:"comment:管理角色ID"`
-}
-
-func (MemberReceiveAddress) TableName() string {
-	return "ums_member_receive_address"
-}

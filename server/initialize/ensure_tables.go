@@ -3,8 +3,10 @@ package initialize
 import (
 	"context"
 	"cooller/server/model/example"
+	"cooller/server/model/product"
 	sysModel "cooller/server/model/system"
 	"cooller/server/service/system"
+
 	adapter "github.com/casbin/gorm-adapter/v3"
 	"gorm.io/gorm"
 )
@@ -56,6 +58,12 @@ func (e *ensureTables) MigrateTable(ctx context.Context) (context.Context, error
 		example.ExaCustomer{},
 		example.ExaFileChunk{},
 		example.ExaFileUploadAndDownload{},
+
+		product.ProductLadder{},
+		product.ProductFullReduction{},
+		product.CouponHistory{},
+		product.CouponProductCategoryRelation{},
+		product.CouponProductRelation{},
 	}
 	for _, t := range tables {
 		_ = db.AutoMigrate(&t)
@@ -91,6 +99,12 @@ func (e *ensureTables) TableCreated(ctx context.Context) bool {
 		example.ExaCustomer{},
 		example.ExaFileChunk{},
 		example.ExaFileUploadAndDownload{},
+
+		product.ProductLadder{},
+		product.ProductFullReduction{},
+		product.CouponHistory{},
+		product.CouponProductCategoryRelation{},
+		product.CouponProductRelation{},
 	}
 	yes := true
 	for _, t := range tables {

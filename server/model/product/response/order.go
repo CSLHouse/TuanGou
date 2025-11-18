@@ -2,7 +2,6 @@ package response
 
 import (
 	"cooller/server/model/product"
-	"cooller/server/model/wechat"
 )
 
 //type CartPromotionItem struct {
@@ -38,9 +37,9 @@ type CalcAmount struct {
 }
 
 type GenerateOrderResModel struct {
-	CartPromotionItemList    []*product.OrderItem          `json:"cartPromotionItemList" gorm:"null;default null"`
-	MemberReceiveAddressList []wechat.MemberReceiveAddress `json:"memberReceiveAddressList" gorm:"null;default null"`
-	CouponHistoryDetailList  []*product.CouponHistory      `json:"couponHistoryDetailList" gorm:"null;default null"`
+	CartPromotionItemList    []*product.OrderItem           `json:"cartPromotionItemList" gorm:"null;default null"`
+	MemberReceiveAddressList []product.MemberReceiveAddress `json:"memberReceiveAddressList" gorm:"null;default null"`
+	CouponHistoryDetailList  []*product.CouponHistory       `json:"couponHistoryDetailList" gorm:"null;default null"`
 	//IntegrationConsumeSetting int                           `json:"integrationConsumeSetting" gorm:"null;default null"`
 	//MemberIntegration         int                           `json:"memberIntegration" gorm:"null;default null"`
 	CalcAmount CalcAmount `json:"calcAmount" gorm:"null;default null"`

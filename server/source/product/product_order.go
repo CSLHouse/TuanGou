@@ -1,13 +1,14 @@
-package wechat
+package product
 
 import (
 	"context"
-	wechatModel "cooller/server/model/product"
+	prductModel "cooller/server/model/product"
 	"cooller/server/service/system"
+
 	"gorm.io/gorm"
 )
 
-const initOrderProductOrder = initOrderOrderSetting + 1
+const initOrderProductOrder = initCouponBoutiqueGroup + 1
 
 type initProductOrder struct{}
 
@@ -22,8 +23,12 @@ func (i *initProductOrder) MigrateTable(ctx context.Context) (context.Context, e
 		return ctx, system.ErrMissingDBContext
 	}
 	return ctx, db.AutoMigrate(
-		&wechatModel.Order{},
-		&wechatModel.OrderItem{},
+		&prductModel.Order{},
+		&prductModel.OrderItem{},
+		&prductModel.CartItem{},
+		&prductModel.CartTmpItem{},
+		&prductModel.AfterSalesUpload{},
+		&prductModel.AfterSalesApply{},
 	)
 }
 
@@ -32,11 +37,11 @@ func (i *initProductOrder) TableCreated(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	return db.Migrator().HasTable(&wechatModel.Order{})
+	return db.Migrator().HasTable(&prductModel.Order{})
 }
 
 func (i initProductOrder) InitializerName() string {
-	return wechatModel.Order{}.TableName()
+	return prductModel.Order{}.TableName()
 }
 
 func (i *initProductOrder) InitializeData(ctx context.Context) (next context.Context, err error) {

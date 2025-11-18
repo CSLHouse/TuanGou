@@ -11,9 +11,10 @@ import (
 	wechatRes "cooller/server/model/wechat/response"
 	"cooller/server/utils"
 	"fmt"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
-	"time"
 )
 
 type HomeApi struct{}
@@ -223,7 +224,7 @@ func (e *HomeApi) GetHomeAdvertiseList(c *gin.Context) {
 }
 
 // FindValidFlashPromotion 获取有效的秒杀活动
-func FindValidFlashPromotion() (promotionValidList []*wechat.FlashPromotion) {
+func (e *HomeApi) FindValidFlashPromotion() (promotionValidList []*wechat.FlashPromotion) {
 	promotionList, err := wechatService.GetOnlineHomeFlashPromotionInfoList()
 	if err != nil {
 		global.GVA_LOG.Error("获取失败!", zap.Error(err))
@@ -241,7 +242,7 @@ func FindValidFlashPromotion() (promotionValidList []*wechat.FlashPromotion) {
 	return promotionValidList
 }
 
-func FindCurrentFlashPromotionSession() (sessionRes wechat.FlashPromotionSession, err error) {
+func (e *HomeApi) FindCurrentFlashPromotionSession() (sessionRes wechat.FlashPromotionSession, err error) {
 	flashSessionList, err := wechatService.GetFlashSessionList()
 	if err != nil || len(flashSessionList) < 1 {
 		global.GVA_LOG.Error("GetFlashSessionList获取失败!", zap.Error(err))
@@ -254,7 +255,7 @@ func FindCurrentFlashPromotionSession() (sessionRes wechat.FlashPromotionSession
 				startTime := time.Date(year, month, day, session.StartTime.Hour(), session.StartTime.Minute(), session.StartTime.Second(), 0, time.Local)
 				EndTime := time.Date(year, month, day, session.EndTime.Hour(), session.EndTime.Minute(), session.EndTime.Second(), 0, time.Local)
 				if now.After(startTime) && now.Before(EndTime) {
-					return session, nil
+					return *session, nil
 				}
 			}
 		}
@@ -266,34 +267,58 @@ func (e *HomeApi) FindNextFlashPromotionSession() (sessionRes wechat.FlashPromot
 	flashSessionList, err := wechatService.GetFlashSessionList()
 	if err != nil || len(flashSessionList) < 1 {
 		return sessionRes, fmt.Errorf("Not found FlashPromotionSession!")
-	} else {
-		now := time.Now()
-		year, month, day := now.Date()
-		nextIndex := 0
-		mini := 0
-		isFind := false
-		nextTime := now.AddDate(0, 0, 1)
-		miniTime := now.AddDate(0, 0, 1)
-		for i, session := range flashSessionList {
-			if session.Status > 0 {
-				startTime := time.Date(year, month, day, session.StartTime.Hour(), session.StartTime.Minute(), session.StartTime.Second(), 0, time.Local)
-				if now.Before(startTime) && nextTime.After(now) && nextTime.After(startTime) {
-					nextIndex = i
-					nextTime = startTime
-					isFind = true
-				}
-				if miniTime.After(startTime) {
-					mini = i
-					miniTime = startTime
-				}
-			}
-		}
-		if !isFind {
-			return flashSessionList[mini], nil
-		} else {
-			return flashSessionList[nextIndex], nil
+	}
+	if len(flashSessionList) < 1 {
+		return sessionRes, fmt.Errorf("Not found FlashPromotionSession!")
+	}
+	// 步骤1：过滤有效场次（仅保留启用状态：status=1）
+	var validSessions []*wechat.FlashPromotionSession
+	for _, session := range flashSessionList {
+		if session != nil && session.Status == 1 { // 排除空指针和未启用场次
+			validSessions = append(validSessions, session)
 		}
 	}
+	if len(validSessions) == 0 {
+		return sessionRes, fmt.Errorf("no valid flash session (status=1)")
+	}
+	// 步骤2：计算每个有效场次的「下一次开始时间」
+	now := time.Now()
+	var nextSession *wechat.FlashPromotionSession
+	var minNextStartTime time.Time // 记录最近的下一次开始时间
+
+	for _, session := range validSessions {
+		// 构造「今日的场次开始时间」（复用场次的时分秒，日期为今天）
+		todaySessionStart := time.Date(
+			now.Year(),
+			now.Month(),
+			now.Day(),
+			session.StartTime.Hour(),
+			session.StartTime.Minute(),
+			session.StartTime.Second(),
+			0,
+			now.Location(), // 保持时区一致，避免跨时区问题
+		)
+
+		// 确定该场次的下一次开始时间
+		var nextStart time.Time
+		if todaySessionStart.After(now) {
+			// 情况1：今日场次还未开始 → 下一次就是今天
+			nextStart = todaySessionStart
+		} else {
+			// 情况2：今日场次已结束/正在进行 → 下一次是明天同一时间
+			nextStart = todaySessionStart.Add(24 * time.Hour)
+		}
+
+		// 步骤3：筛选出「下一次开始时间最早」的场次
+		if nextSession == nil || nextStart.Before(minNextStartTime) {
+			nextSession = session
+			minNextStartTime = nextStart
+		}
+	}
+
+	// 步骤4：返回结果（nextSession不可能为nil，因为validSessions非空）
+	sessionRes = *nextSession
+	return sessionRes, nil
 }
 
 func (e *HomeApi) GetAllWechatContent(c *gin.Context) {
@@ -318,9 +343,9 @@ func (e *HomeApi) GetAllWechatContent(c *gin.Context) {
 	}
 
 	var homeFlashPromotion wechatRes.HomeFlashResponse
-	promotionValidList := FindValidFlashPromotion()
+	promotionValidList := e.FindValidFlashPromotion()
 	if len(promotionValidList) > 0 {
-		currentFlash, err := FindCurrentFlashPromotionSession()
+		currentFlash, err := e.FindCurrentFlashPromotionSession()
 		if err == nil {
 			homeFlashPromotion.StartTime = currentFlash.StartTime
 			homeFlashPromotion.EndTime = currentFlash.EndTime
@@ -556,10 +581,10 @@ func (e *HomeApi) DeleteNewProduct(c *gin.Context) {
 }
 
 // GetFlashPromotionProductList 获取当前活动中的商品关联表
-func GetFlashPromotionProductList() (list []wechat.FlashPromotionProductRelation) {
-	promotionValidList := FindValidFlashPromotion()
+func (e *HomeApi) GetFlashPromotionProductList() (list []wechat.FlashPromotionProductRelation) {
+	promotionValidList := e.FindValidFlashPromotion()
 	if len(promotionValidList) > 0 {
-		currentFlash, err := FindCurrentFlashPromotionSession()
+		currentFlash, err := e.FindCurrentFlashPromotionSession()
 		if err == nil {
 			for _, flashPromotion := range promotionValidList {
 				sessionProductList, err := wechatService.GetFlashPromotionProductRelationListById(flashPromotion.ID, currentFlash.ID)
@@ -575,7 +600,7 @@ func GetFlashPromotionProductList() (list []wechat.FlashPromotionProductRelation
 	return list
 }
 
-func CalculateProductPromotionPrice(product product.Product, list []wechat.FlashPromotionProductRelation) (promotionMessage string, reduceAmount float32) {
+func (e *HomeApi) CalculateProductPromotionPrice(product product.Product, list []wechat.FlashPromotionProductRelation) (promotionMessage string, reduceAmount float32) {
 	promotion := product.PromotionType
 	// TODO: 各个优惠计算
 	if promotion == 0 {
@@ -614,7 +639,7 @@ func CalculateProductPromotionPrice(product product.Product, list []wechat.Flash
 				}
 			}
 		} else {
-			sessionProductList := GetFlashPromotionProductList()
+			sessionProductList := e.GetFlashPromotionProductList()
 			for _, relation := range sessionProductList {
 				if product.ID == relation.ProductId {
 					product.Price = relation.FlashPromotionPrice

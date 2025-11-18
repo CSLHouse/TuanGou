@@ -4,10 +4,11 @@ import (
 	"context"
 	wechatModel "cooller/server/model/wechat"
 	"cooller/server/service/system"
+
 	"gorm.io/gorm"
 )
 
-const initOrderWXUser = initOrderProductOrder + 1
+const initOrderWXUser = initOrderTeam + 1
 
 type initWXUser struct{}
 

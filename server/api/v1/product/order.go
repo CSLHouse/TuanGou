@@ -337,7 +337,7 @@ func (e *OrderApi) GenerateOrder(c *gin.Context) {
 		response.FailWithMessage(err.Error(), c)
 		return
 	}
-	order.ReceiveAddressId = address.ID
+	order.MemberReceiveAddressId = address.ID
 	//order.ReceiverPhone = address.Telephone
 	//order.ReceiverName = address.Name
 	//order.ReceiverPostCode = address.PostCode
@@ -434,7 +434,7 @@ func (e *OrderApi) buildPayReq(order *product.Order, orderReq productReq.OrderCr
 	//global.GVA_LOG.Error("---OrderSn:" + OrderSn)
 	payReq.OutTradeNo = utils.String(order.OrderSn)
 	payReq.TimeExpire = utils.String(time.Now().Format(time.RFC3339))
-	payReq.NotifyUrl = utils.String("https://cs.coollerbaby.cn/pay/notify")
+	payReq.NotifyUrl = utils.String("https://wx.guocihuatai.com/order/notify")
 	payReq.GoodsTag = utils.String("WXG")
 	payReq.SettleInfo = &payRequest.SettleInfo{
 		ProfitSharing: utils.Bool(false),
@@ -527,7 +527,8 @@ func (e *OrderApi) ListPromotion(cartItemList []*product.CartCommonItem) (cartPr
 		cartPromotionItem.GiftIntegration = 0
 		cartPromotionItem.GiftGrowth = 0
 
-		promotionMessage, reduceAmount := wechatApi.CalculateProductPromotionPrice(cart.Product, nil)
+		var homeApi wechatApi.HomeApi
+		promotionMessage, reduceAmount := homeApi.CalculateProductPromotionPrice(cart.Product, nil)
 		cartPromotionItem.ReduceAmount = reduceAmount
 		cartPromotionItem.PromotionMessage = fmt.Sprintf("满减优惠：%s", promotionMessage)
 		cartPromotionItem.RealStock = cart.SkuStock.Stock
@@ -713,7 +714,7 @@ func (e *OrderApi) CheckDuplicateUnpaidOrder(userId int, orderReq productReq.Ord
 	// 2. 遍历未支付订单，检查是否与当前订单特征匹配
 	for _, order := range unpaidOrders {
 		// 基础条件匹配：收货地址、优惠券、支付方式、积分
-		if order.ReceiveAddressId != orderReq.MemberReceiveAddressId ||
+		if order.MemberReceiveAddressId != orderReq.MemberReceiveAddressId ||
 			order.CouponId != orderReq.CouponId ||
 			order.PayType != orderReq.PayType ||
 			order.UseIntegration != orderReq.UseIntegration {

@@ -4,12 +4,13 @@ import (
 	"context"
 	wechatModel "cooller/server/model/wechat"
 	"cooller/server/service/system"
+	"time"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"time"
 )
 
-const initOrderFlashPromotion = initOrderWXUser + 1
+const initOrderFlashPromotion = initOrderNewProduct + 1
 
 type initFlashPromotion struct{}
 

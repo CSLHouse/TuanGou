@@ -115,4 +115,4 @@ TODO:
 
 
 远程服务器信息：
-1. mysql密码：nopwd@mysql
+1. mysql密码：Nopwd@mysql123

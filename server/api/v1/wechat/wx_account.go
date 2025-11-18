@@ -5,6 +5,7 @@ import (
 	"cooller/server/middleware"
 	"cooller/server/model/common/request"
 	"cooller/server/model/common/response"
+	"cooller/server/model/product"
 	"cooller/server/model/system"
 	systemReq "cooller/server/model/system/request"
 	"cooller/server/model/wechat"
@@ -12,10 +13,11 @@ import (
 	wechatRes "cooller/server/model/wechat/response"
 	"cooller/server/utils"
 	"fmt"
+	"time"
+
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
-	"time"
 )
 
 type WXAccountApi struct{}
@@ -360,7 +362,7 @@ func (b *WXAccountApi) RecordShareScanAccount(c *gin.Context) {
 }
 
 func (b *WXAccountApi) CreateMemberReceiveAddress(c *gin.Context) {
-	var address wechat.MemberReceiveAddress
+	var address product.MemberReceiveAddress
 	err := c.ShouldBindJSON(&address)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)
@@ -429,7 +431,7 @@ func (b *WXAccountApi) GetMemberReceiveAddressById(c *gin.Context) {
 
 // UpdateMemberReceiveAddress 更新会员地址列表
 func (b *WXAccountApi) UpdateMemberReceiveAddress(c *gin.Context) {
-	var address wechat.MemberReceiveAddress
+	var address product.MemberReceiveAddress
 	err := c.ShouldBindJSON(&address)
 	if err != nil {
 		response.FailWithMessage(err.Error(), c)

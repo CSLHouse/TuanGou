@@ -4,10 +4,11 @@ import (
 	"context"
 	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
+
 	"gorm.io/gorm"
 )
 
-const initCouponBoutiqueGroup = system.InitProductInternal + 1
+const initCouponBoutiqueGroup = initOrderHomeProductAttributeCategory + 1
 
 type initCouponGroup struct{}
 

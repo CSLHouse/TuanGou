@@ -4,11 +4,12 @@ import (
 	"context"
 	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
 
-const initOrderHomeProductAttributeCategory = initOrderHomeProduct + 1
+const initOrderHomeProductAttributeCategory = initOrderHomeProductCategory + 1
 
 type initHomeProductAttributeCategory struct{}
 

@@ -3,6 +3,7 @@ package wechat
 import (
 	v1 "cooller/server/api/v1"
 	"cooller/server/middleware"
+
 	"github.com/gin-gonic/gin"
 )
 

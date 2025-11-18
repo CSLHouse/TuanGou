@@ -2,7 +2,9 @@ package wechat
 
 import (
 	"cooller/server/global"
+	"cooller/server/model/product"
 	"cooller/server/model/wechat"
+
 	"gorm.io/gorm"
 )
 
@@ -81,29 +83,29 @@ func (exa *AccountService) CheckWXAccountPhone(openId string) (wxUser wechat.WXU
 	return wxUser, err
 }
 
-func (exa *AccountService) CreateMemberReceiveAddress(e *wechat.MemberReceiveAddress) (err error) {
+func (exa *AccountService) CreateMemberReceiveAddress(e *product.MemberReceiveAddress) (err error) {
 	err = global.GVA_DB.Create(&e).Error
 	return err
 }
 
-func (exa *AccountService) GetMemberReceiveAddressById(id int) (e wechat.MemberReceiveAddress, err error) {
-	var address wechat.MemberReceiveAddress
+func (exa *AccountService) GetMemberReceiveAddressById(id int) (e product.MemberReceiveAddress, err error) {
+	var address product.MemberReceiveAddress
 	err = global.GVA_DB.Where("id = ?", id).Find(&address).Error
 	return address, err
 }
 
-func (exa *AccountService) GetMemberReceiveAddressList(userId int) (addressList []wechat.MemberReceiveAddress, err error) {
+func (exa *AccountService) GetMemberReceiveAddressList(userId int) (addressList []product.MemberReceiveAddress, err error) {
 	err = global.GVA_DB.Where("user_id = ?", userId).Find(&addressList).Error
 	return addressList, err
 }
 
-func (exa *AccountService) UpdateMemberReceiveAddress(e *wechat.MemberReceiveAddress) (err error) {
+func (exa *AccountService) UpdateMemberReceiveAddress(e *product.MemberReceiveAddress) (err error) {
 	err = global.GVA_DB.Save(e).Error
 	return err
 }
 
 func (exa *AccountService) DeleteMemberReceiveAddress(id int) (err error) {
-	var address wechat.MemberReceiveAddress
+	var address product.MemberReceiveAddress
 	err = global.GVA_DB.Where("id = ?", id).Delete(&address).Error
 	return err
 }

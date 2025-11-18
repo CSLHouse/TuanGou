@@ -6,7 +6,6 @@ import (
 	"cooller/server/model/product"
 	"cooller/server/model/wechat"
 	wechatRequest "cooller/server/model/wechat/request"
-	wechatRes "cooller/server/model/wechat/response"
 	"fmt"
 	"strings"
 )
@@ -80,20 +79,17 @@ func (exa *HomeService) GetHomeAdvertiseInfoList(info request.PageInfo) (list []
 }
 
 func (exa *HomeService) GetOnlineHomeAdvertiseInfoList() (list []wechat.Advertise, err error) {
-	db := global.GVA_DB.Model(&wechat.Advertise{})
-	err = db.Where("state = 1").Order("sort desc").Find(&list).Error
+	err = global.GVA_DB.Model(&wechat.Advertise{}).Where("state = 1").Order("sort desc").Find(&list).Error
 	return list, err
 }
 
 func (exa *HomeService) GetOnlineHomeBrandInfoList() (list []product.Brand, err error) {
-	db := global.GVA_DB.Model(&product.Brand{})
-	err = db.Where("show_status = 1").Order("sort desc").Find(&list).Error
+	err = global.GVA_DB.Where("show_status = 1").Order("sort desc").Find(&list).Error
 	return list, err
 }
 
 func (exa *HomeService) GetOnlineHomeFlashPromotionInfoList() (list []*wechat.FlashPromotion, err error) {
-	db := global.GVA_DB.Model(&wechat.FlashPromotion{})
-	err = db.Where("status = 1").Find(&list).Error
+	err = global.GVA_DB.Where("status = 1").Find(&list).Error
 	return list, err
 }
 
@@ -125,7 +121,7 @@ func (exa *HomeService) DeleteNewProduct(ids []int) (err error) {
 	return err
 }
 
-func (exa *HomeService) GetNewProductInfoList(info request.NameAndStateSearchInfo) (list []wechatRes.NewProductRes, total int64, err error) {
+func (exa *HomeService) GetNewProductInfoList(info request.NameAndStateSearchInfo) (list []wechat.NewProduct, total int64, err error) {
 	limit := info.PageSize
 	offset := info.PageSize * (info.Page - 1)
 	db := global.GVA_DB.Model(&wechat.NewProduct{})
@@ -156,7 +152,7 @@ func (exa *HomeService) GetNewProductInfoList(info request.NameAndStateSearchInf
 	if err != nil {
 		return list, total, err
 	} else {
-		err = db.Debug().Where(cmdSearch).Omit("Product").Limit(limit).Offset(offset).Find(&list).Error
+		err = db.Debug().Where(cmdSearch).Preload("Product").Limit(limit).Offset(offset).Find(&list).Error
 	}
 	return list, total, err
 }
@@ -167,8 +163,7 @@ func (exa *HomeService) GetNewProductIdsList() (list []int, err error) {
 }
 
 func (exa *HomeService) GetOnlineNewProductInfoList() (list []wechat.NewProduct, err error) {
-	db := global.GVA_DB.Model(&wechat.NewProduct{})
-	err = db.Where("recommend_status = 1").Preload("Product").Order("sort desc").Find(&list).Error
+	err = global.GVA_DB.Where("recommend_status = 1").Preload("Product").Order("sort desc").Find(&list).Error
 	return list, err
 }
 
@@ -198,9 +193,7 @@ func (exa *HomeService) GetOnlineRecommendProductListInfoList(pageInfo request.P
 	limit := pageInfo.PageSize
 	offset := pageInfo.PageSize * (pageInfo.Page - 1)
 
-	db := global.GVA_DB.Model(&wechat.RecommendProduct{})
-
-	err = db.Limit(limit).Offset(offset).Where("recommend_status = 1").Preload("Product").Order("sort desc").Find(&recommendProductList).Error
+	err = global.GVA_DB.Limit(limit).Offset(offset).Where("recommend_status = 1").Preload("Product").Order("sort desc").Find(&recommendProductList).Error
 	return recommendProductList, err
 }
 
@@ -248,7 +241,7 @@ func (exa *HomeService) GetFlashPromotionList(searchInfo request.PageInfo) (list
 		if err != nil {
 			return list, total, err
 		} else {
-			err = db.Limit(limit).Offset(offset).Where(cmdName).Find(&list).Error
+			err = global.GVA_DB.Limit(limit).Offset(offset).Where(cmdName).Find(&list).Error
 		}
 	} else {
 		db := global.GVA_DB.Model(&wechat.FlashPromotion{})
@@ -300,8 +293,7 @@ func (exa *HomeService) GetFlashPromotionProductRelationList(searchInfo wechatRe
 }
 
 func (exa *HomeService) GetFlashPromotionProductRelationListById(flashPromotionId int, flashPromotionSessionId int) (list []wechat.FlashPromotionProductRelation, err error) {
-	db := global.GVA_DB.Model(&wechat.FlashPromotionProductRelation{})
-	err = db.Debug().Where("flash_promotion_id = ? and flash_promotion_session_id = ?", flashPromotionId, flashPromotionSessionId).Preload("Product").Find(&list).Error
+	err = global.GVA_DB.Debug().Where("flash_promotion_id = ? and flash_promotion_session_id = ?", flashPromotionId, flashPromotionSessionId).Preload("Product").Find(&list).Error
 	return list, err
 }
 
@@ -327,9 +319,8 @@ func (exa *HomeService) DeleteFlashPromotionProductRelationById(id int) (err err
 	return err
 }
 
-func (exa *HomeService) GetFlashSessionList() (list []wechat.FlashPromotionSession, err error) {
-	db := global.GVA_DB.Model(&wechat.FlashPromotionSession{})
-	err = db.Find(&list).Error
+func (exa *HomeService) GetFlashSessionList() (list []*wechat.FlashPromotionSession, err error) {
+	err = global.GVA_DB.Find(&list).Error
 	return list, err
 }
 
@@ -362,13 +353,11 @@ func (exa *HomeService) UpdateFlashSessionStatus(id int, status int) (err error)
 }
 
 func (exa *HomeService) GetFlashSessionSelectList(id int) (list []*wechat.FlashPromotionSession, err error) {
-	db := global.GVA_DB.Model(&wechat.FlashPromotionSession{})
-	err = db.Preload("ProductRelation").Find(&list).Error
+	err = global.GVA_DB.Preload("ProductRelation").Find(&list).Error
 	return list, err
 }
 
 func (exa *HomeService) GetGroupBuyProductList() (list []*wechat.GroupBuyProduct, err error) {
-	db := global.GVA_DB.Model(&wechat.GroupBuyProduct{})
-	err = db.Preload("Product").Find(&list).Error
+	err = global.GVA_DB.Preload("Product").Find(&list).Error
 	return list, err
 }

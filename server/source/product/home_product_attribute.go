@@ -4,6 +4,7 @@ import (
 	"context"
 	productModel "cooller/server/model/product"
 	"cooller/server/service/system"
+
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
 )
@@ -58,7 +59,7 @@ func (i *initHomeProductAttribute) InitializeData(ctx context.Context) (next con
 			SearchType:                 0,
 			RelatedStatus:              0,
 			HandAddStatus:              1,
-			Type:                       1,
+			Type:                       0,
 		},
 		{
 			ProductAttributeCategoryId: 1,
@@ -71,7 +72,7 @@ func (i *initHomeProductAttribute) InitializeData(ctx context.Context) (next con
 			SearchType:                 0,
 			RelatedStatus:              0,
 			HandAddStatus:              0,
-			Type:                       1,
+			Type:                       0,
 		},
 		{
 			ProductAttributeCategoryId: 1,
@@ -84,7 +85,7 @@ func (i *initHomeProductAttribute) InitializeData(ctx context.Context) (next con
 			SearchType:                 0,
 			RelatedStatus:              0,
 			HandAddStatus:              0,
-			Type:                       0,
+			Type:                       1,
 		},
 	}
 	if err = db.Create(&entities).Error; err != nil {
@@ -100,7 +101,7 @@ func (i *initHomeProductAttribute) DataInserted(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	if errors.Is(db.Where("name = ?", "款式").First(&productModel.ProductAttribute{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
+	if errors.Is(db.Where("name = ?", "颜色").First(&productModel.ProductAttribute{}).Error, gorm.ErrRecordNotFound) { // 判断是否存在数据
 		return false
 	}
 	return true

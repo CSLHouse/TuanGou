@@ -93,7 +93,7 @@ func (o *OrderService) CreateOrderItemByBatch(e []*product.OrderItem) (err error
 
 func (o *OrderService) GetProductOrderById(id int) (order product.Order, err error) {
 	db := global.GVA_DB.Model(&product.Order{})
-	db.Debug().Where("id = ?", id).Preload("OrderItemList").First(&order)
+	db.Debug().Where("id = ?", id).Preload("ReceiveAddress").Preload("OrderItemList").First(&order)
 	return order, err
 }
 

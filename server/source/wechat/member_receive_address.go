@@ -2,8 +2,9 @@ package wechat
 
 import (
 	"context"
-	wechatModel "cooller/server/model/wechat"
+	"cooller/server/model/product"
 	"cooller/server/service/system"
+
 	"gorm.io/gorm"
 )
 
@@ -22,7 +23,7 @@ func (i *initMemberReceiveAddress) MigrateTable(ctx context.Context) (context.Co
 		return ctx, system.ErrMissingDBContext
 	}
 	return ctx, db.AutoMigrate(
-		&wechatModel.MemberReceiveAddress{},
+		&product.MemberReceiveAddress{},
 	)
 }
 
@@ -31,11 +32,11 @@ func (i *initMemberReceiveAddress) TableCreated(ctx context.Context) bool {
 	if !ok {
 		return false
 	}
-	return db.Migrator().HasTable(&wechatModel.MemberReceiveAddress{})
+	return db.Migrator().HasTable(&product.MemberReceiveAddress{})
 }
 
 func (i initMemberReceiveAddress) InitializerName() string {
-	return wechatModel.MemberReceiveAddress{}.TableName()
+	return product.MemberReceiveAddress{}.TableName()
 }
 
 func (i *initMemberReceiveAddress) InitializeData(ctx context.Context) (next context.Context, err error) {

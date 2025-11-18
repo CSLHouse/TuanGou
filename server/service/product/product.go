@@ -573,10 +573,10 @@ func (exa *ProductService) UpdateProductAttributeCategory(e *product.ProductAttr
 	return err
 }
 
-func (exa *ProductService) UpdateProductAttributeCategoryCount(id int, keyword string) (err error) {
+func (exa *ProductService) UpdateProductAttributeCategoryCount(id int, keyword string, action string) (err error) {
 	db := global.GVA_DB.Model(&product.ProductAttributeCategory{})
 	//cmd := fmt.Sprintf("%s + %d", keyword, 1)
-	db.Where("id = ?", id).Update(keyword, gorm.Expr(keyword+" + ?", 1))
+	db.Where("id = ?", id).Update(keyword, gorm.Expr(keyword+action))
 	return err
 }
 
@@ -622,9 +622,9 @@ func (exa *ProductService) CreateProductAttributeSynchronous(e *product.ProductA
 	}
 	// 修改商品类型属性和参数统计
 	if e.Type == 0 {
-		err = exa.UpdateProductAttributeCategoryCount(e.ProductAttributeCategoryId, "attribute_count")
+		err = exa.UpdateProductAttributeCategoryCount(e.ProductAttributeCategoryId, "attribute_count", " + 1")
 	} else if e.Type == 1 {
-		err = exa.UpdateProductAttributeCategoryCount(e.ProductAttributeCategoryId, "param_count")
+		err = exa.UpdateProductAttributeCategoryCount(e.ProductAttributeCategoryId, "param_count", " + 1")
 	} else {
 		tx.Rollback()
 		return errors.New("属性类型错误")
@@ -654,9 +654,41 @@ func (exa *ProductService) UpdateProductAttribute(e *product.ProductAttribute) (
 }
 
 func (exa *ProductService) DeleteProductAttribute(id int) (err error) {
+	tx := global.GVA_DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if tx.Error != nil {
+		return err
+	}
+
 	var attribute product.ProductAttribute
+	err = global.GVA_DB.Where("id = ?", id).First(&attribute).Error
+
+	// 修改商品类型属性和参数统计
+	if attribute.Type == 0 {
+		err = exa.UpdateProductAttributeCategoryCount(attribute.ProductAttributeCategoryId, "attribute_count", " - 1")
+	} else if attribute.Type == 1 {
+		err = exa.UpdateProductAttributeCategoryCount(attribute.ProductAttributeCategoryId, "param_count", " - 1")
+	} else {
+		tx.Rollback()
+		return errors.New("属性类型错误")
+	}
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// 存储属性
 	err = global.GVA_DB.Where("id = ?", id).Delete(&attribute).Error
-	return err
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	return tx.Commit().Error
 }
 
 func (exa *ProductService) GetProductAttributeList(searchInfo request.TagSearchInfo) (list []product.ProductAttribute, total int64, err error) {

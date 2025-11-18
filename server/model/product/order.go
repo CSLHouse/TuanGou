@@ -5,6 +5,26 @@ import (
 	"time"
 )
 
+// MemberReceiveAddress 会员收货地址表
+type MemberReceiveAddress struct {
+	global.GVA_MODEL
+	UserId        int    `json:"userId" `
+	Name          string `json:"name" gorm:"not null;comment:收货人名称;size:100"`
+	Telephone     string `json:"telephone" gorm:"not null；comment:手机号;size:11"`
+	DefaultStatus uint   `json:"defaultStatus" gorm:"comment:是否默认;0->是；1->否"`
+	PostCode      string `json:"postCode" gorm:"comment:邮政编码"`
+	Province      string `json:"province" gorm:"comment:省份/直辖市"`
+	City          string `json:"city" gorm:"not null；comment:城市"`
+	Region        string `json:"region" gorm:"not null；comment:区"`
+	DetailAddress string `json:"detailAddress" gorm:"comment:详细地址(楼层、门牌号)"`
+
+	//SysUserAuthorityID uint   `json:"sys_user_authority_id" form:"sys_user_authority_id" gorm:"comment:管理角色ID"`
+}
+
+func (MemberReceiveAddress) TableName() string {
+	return "ums_member_receive_address"
+}
+
 // Order 订单表
 type Order struct {
 	global.GVA_MODEL
@@ -41,18 +61,19 @@ type Order struct {
 	//ReceiverCity          string       `json:"receiverCity" gorm:"null;default null;comment:城市"`
 	//ReceiverRegion        string       `json:"receiverRegion" gorm:"null;default null;comment:区"`
 	//ReceiverDetailAddress string       `json:"receiverDetailAddress" gorm:"null;default null;comment:详细地址"`
-	ReceiveAddressId int       `json:"memberReceiveAddressId" gorm:"not null;"`
-	Note             string    `json:"note" gorm:"null;default null;comment:订单备注"`
-	ConfirmStatus    int       `json:"confirmStatus" gorm:"null;default null;comment:确认收货状态：0->未确认；1->已确认;size:1;"`
-	DeleteStatus     int       `json:"deleteStatus" gorm:"null;default null;comment:删除状态：0->未删除；1->已删除;size:1;"`
-	UseIntegration   int       `json:"useIntegration" gorm:"null;default null;comment:下单时使用的积分;size:11;"`
-	PaymentTime      time.Time `json:"paymentTime" gorm:"null;default null;comment:支付时间"`
-	LogisticsTime    time.Time `json:"logisticsTime" gorm:"null;default 1000-01-01 00:00:00;comment:发货时间"`
-	ReceiveTime      time.Time `json:"receiveTime" gorm:"null;default 1000-01-01 00:00:00;comment:确认收货时间"`
+	MemberReceiveAddressId int       `json:"memberReceiveAddressId" gorm:"not null;"`
+	Note                   string    `json:"note" gorm:"null;default null;comment:订单备注"`
+	ConfirmStatus          int       `json:"confirmStatus" gorm:"null;default null;comment:确认收货状态：0->未确认；1->已确认;size:1;"`
+	DeleteStatus           int       `json:"deleteStatus" gorm:"null;default null;comment:删除状态：0->未删除；1->已删除;size:1;"`
+	UseIntegration         int       `json:"useIntegration" gorm:"null;default null;comment:下单时使用的积分;size:11;"`
+	PaymentTime            time.Time `json:"paymentTime" gorm:"null;default null;comment:支付时间"`
+	LogisticsTime          time.Time `json:"logisticsTime" gorm:"null;default 1000-01-01 00:00:00;comment:发货时间"`
+	ReceiveTime            time.Time `json:"receiveTime" gorm:"null;default 1000-01-01 00:00:00;comment:确认收货时间"`
 	//CommentTime      time.Time `json:"commentTime" gorm:"null;default 1000-01-01 00:00:00;comment:评价时间"`
 	//ModifyTime       time.Time    `json:"modifyTime" gorm:"null;default 1000-01-01 00:00:00;comment:修改时间"`
-	OrderItemList []*OrderItem `json:"orderItemList" gorm:"foreignKey:OrderId"`
-	PrepayId      string       `json:"prepayId" gorm:"null;default null;comment:预支付交易会话标识"`
+	OrderItemList  []*OrderItem         `json:"orderItemList" gorm:"foreignKey:OrderId"`
+	PrepayId       string               `json:"prepayId" gorm:"null;default null;comment:预支付交易会话标识"`
+	ReceiveAddress MemberReceiveAddress `json:"receiveAddress" gorm:"foreignKey:MemberReceiveAddressId"`
 }
 
 func (Order) TableName() string {

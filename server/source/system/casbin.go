@@ -476,6 +476,8 @@ func (i *initCasbin) InitializeData(ctx context.Context) (context.Context, error
 		{Ptype: "p", V0: "9528", V1: "/business/cardList", V2: "GET"},
 		{Ptype: "p", V0: "9528", V1: "/business/certificateList", V2: "GET"},
 
+		{Ptype: "p", V0: "9528", V1: "/promo/recommendProduct", V2: "GET"},
+		{Ptype: "p", V0: "9528", V1: "/promo/newProductList", V2: "GET"},
 		{Ptype: "p", V0: "9528", V1: "/business/renew", V2: "POST"},
 		{Ptype: "p", V0: "9528", V1: "/business/consume", V2: "POST"},
 		{Ptype: "p", V0: "9528", V1: "/business/consumeList", V2: "GET"},
