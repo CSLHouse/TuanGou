@@ -1,11 +1,11 @@
 import service from '@/utils/request'
-// export function fetchList(params) {
-//   return service({
-//     url:'/promo/newProductList',
-//     method:'get',
-//     params:params
-//   })
-// }
+export function fetchList(params) {
+  return service({
+    url:'/promo/newProductList',
+    method:'get',
+    params:params
+  })
+}
 
 export function updateRecommendStatus(data) {
   return service({

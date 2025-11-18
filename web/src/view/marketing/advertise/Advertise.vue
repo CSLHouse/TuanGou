@@ -281,7 +281,6 @@
 
   const enterDialog = async() => {
     let res
-    console.log("----enterDialog---", productForm.value)
     
     switch (type.value) {
         case 'create':

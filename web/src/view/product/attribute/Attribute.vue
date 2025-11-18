@@ -213,7 +213,7 @@ import { number } from 'echarts'
   }
   const deleteAttribute = async(row) => {
     row.visible = false
-    const res = await deleteProductAttribute({Id: row.Id })
+    const res = await deleteProductAttribute({Id: row.id })
     if (res.code === 0) {
       ElMessage({
         type: 'success',
